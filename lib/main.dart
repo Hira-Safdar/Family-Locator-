@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants/app_strings.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
+import 'core/router/app_router.dart';
 
 
 Future<void> main() async {
@@ -15,20 +16,18 @@ Future<void> main() async {
   runApp(const ProviderScope(child: FamilyApp()));
 }
 
-class FamilyApp extends StatelessWidget {
+class FamilyApp extends ConsumerWidget {
   const FamilyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
       title: AppStrings.appName,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      
-      home: const Scaffold(
-        body: Center(child: CircularProgressIndicator()),          
-        ),
-      );
+      routerConfig: router,
+    );
   }
 }
