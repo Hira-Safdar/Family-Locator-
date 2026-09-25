@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared_widgets/custom_button.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
-
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -19,13 +18,39 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _emailError;
+  String? _passwordError;
+  String? _serverError;
+
+  String? _validateEmail(String email) {
+    final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
+    return valid ? null : 'Enter a valid email';
+  }
 
   Future<void> _submit() async {
-    final auth = ref.read(authControllerProvider.notifier);
-    await auth.signIn(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    final emailError = _validateEmail(email);
+    final passwordError = password.isEmpty ? 'Password cannot be empty' : null;
+    if (emailError != null || passwordError != null) {
+      setState(() {
+        _emailError = emailError;
+        _passwordError = passwordError;
+        _serverError = null;
+      });
+      return;
+    }
+
+    final controller = ref.read(authControllerProvider.notifier);
+    try {
+      await controller.signIn(email: email, password: password);
+      if (mounted) context.go('/home');
+    } on Failure catch (e) {
+      setState(() => _serverError = e.message);
+    } catch (_) {
+      setState(() => _serverError = 'Something went wrong. Please try again.');
+    }
   }
 
   @override
@@ -39,20 +64,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
 
-    ref.listen(authControllerProvider, (prev, next) {
-      next.whenOrNull(
-        error: (error, stackTrace) {
-          final message = error is Failure
-              ? error.message
-              : 'Something went wrong. Please try again.';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message)),
-          );
-        },
-      );
-    });
-
-        return Scaffold(
+    return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -89,21 +101,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    errorText: _emailError,
                   ),
+                  onChanged: (_) {
+                    if (_emailError != null) setState(() => _emailError = null);
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    errorText: _passwordError,
                   ),
+                  onChanged: (_) {
+                    if (_passwordError != null) {
+                      setState(() => _passwordError = null);
+                    }
+                  },
+                  onSubmitted: (_) => _submit(),
                 ),
+                if (_serverError != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _serverError!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 CustomButton(
                   label: 'Sign In',

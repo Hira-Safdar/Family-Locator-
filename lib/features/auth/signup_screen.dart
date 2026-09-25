@@ -17,14 +17,60 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _nameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _serverError;
+
+  String? _validateEmail(String email) {
+    final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
+    return valid ? null : 'Enter a valid email';
+  }
+
+  String? _validatePassword(String password) {
+    if (password.length < 12) return 'Password must be at least 12 characters';
+    final hasUpper = password.contains(RegExp(r'[A-Z]'));
+    final hasDigit = password.contains(RegExp(r'[0-9]'));
+    final hasSpecial = password.contains(RegExp(r'[@#\$&]'));
+    if (!hasUpper || !hasDigit || !hasSpecial) {
+      return 'Use a capital letter, a number and a special symbol (@#\$&)';
+    }
+    return null;
+  }
 
   Future<void> _submit() async {
-    final auth = ref.read(authControllerProvider.notifier);
-    await auth.signUp(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    final nameError = name.isEmpty ? 'Name cannot be empty' : null;
+    final emailError = _validateEmail(email);
+    final passwordError = password.isEmpty
+        ? 'Password cannot be empty'
+        : _validatePassword(password);
+    if (nameError != null || emailError != null || passwordError != null) {
+      setState(() {
+        _nameError = nameError;
+        _emailError = emailError;
+        _passwordError = passwordError;
+        _serverError = null;
+      });
+      return;
+    }
+
+    final controller = ref.read(authControllerProvider.notifier);
+    try {
+      await controller.signUp(
+        name: name,
+        email: email,
+        password: password,
+      );
+      if (mounted) context.go('/home');
+    } on Failure catch (e) {
+      setState(() => _serverError = e.message);
+    } catch (_) {
+      setState(() => _serverError = 'Something went wrong. Please try again.');
+    }
   }
 
   @override
@@ -38,19 +84,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
-
-    ref.listen(authControllerProvider, (prev, next) {
-      next.whenOrNull(
-        error: (error, stackTrace) {
-          final message = error is Failure
-              ? error.message
-              : 'Something went wrong. Please try again.';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message)),
-          );
-        },
-      );
-    });
 
     return Scaffold(
       appBar: AppBar(),
@@ -73,10 +106,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 TextField(
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Full Name',
-                    prefixIcon: Icon(Icons.person_outline),
+                    prefixIcon: const Icon(Icons.person_outline),
+                    errorText: _nameError,
                   ),
+                  onChanged: (_) {
+                    if (_nameError != null) setState(() => _nameError = null);
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -84,10 +121,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    errorText: _emailError,
                   ),
+                  onChanged: (_) {
+                    if (_emailError != null) setState(() => _emailError = null);
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -95,11 +136,26 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    errorText: _passwordError,
                   ),
+                  onChanged: (_) {
+                    if (_passwordError != null) {
+                      setState(() => _passwordError = null);
+                    }
+                  },
+                  onSubmitted: (_) => _submit(),
                 ),
+                if (_serverError != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _serverError!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 CustomButton(
@@ -112,7 +168,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Already have an account?"),
+                    Text('Already have an account?'),
                     TextButton(
                       onPressed: () => context.go('/login'),
                       child: const Text('Sign In'),

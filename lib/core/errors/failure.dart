@@ -10,4 +10,17 @@ class AuthFailure extends Failure{
 
 class NetworkFailure extends Failure{
   const NetworkFailure(super.message);
-  }
+}
+
+class FirestoreFailure extends Failure{
+  const FirestoreFailure(super.message);
+}
+
+class GroupNotFoundFailure extends Failure{
+  const GroupNotFoundFailure(super.message);
+}
+
+class GroupAlreadyMemberFailure extends Failure{
+  const GroupAlreadyMemberFailure(super.message);
+}
+
