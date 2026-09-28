@@ -18,9 +18,13 @@ class AuthController extends AsyncNotifier<void> {
 
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() {
-      return ref.read(authRepositoryProvider).signIn(email: email, password: password);
-    });
+    try {
+      await ref.read(authRepositoryProvider).signIn(email: email, password: password);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
   }
 
   Future<void> signUp({
@@ -29,9 +33,13 @@ class AuthController extends AsyncNotifier<void> {
     required String name,
   }) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() {
-      return ref.read(authRepositoryProvider).signUp(email: email, password: password, name: name);
-    });
+    try {
+      await ref.read(authRepositoryProvider).signUp(email: email, password: password, name: name);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
   }
 
   Future<void> signOut() async {

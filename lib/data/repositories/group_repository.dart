@@ -53,8 +53,11 @@ class GroupRepository {
         }
         final doc = snap.docs.first;
         final group = GroupModel.fromJson(doc.data());
+        if (group.ownerId == uid) {
+          throw const GroupAlreadyMemberFailure('You are the owner of this group. You are already a part of it.');
+        }
         if (group.containsMember(uid)) {
-          throw const GroupAlreadyMemberFailure('You are already in this group.');
+          throw const GroupAlreadyMemberFailure('You are already a member of this group.');
         }
         final newMember= <String>[...group.memberIds, uid];
         await _firestore.runTransaction((ts) async {

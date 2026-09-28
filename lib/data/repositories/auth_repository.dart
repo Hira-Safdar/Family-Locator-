@@ -47,6 +47,7 @@ class AuthRepository{
   AuthFailure _mapAuthError(fb.FirebaseAuthException e){
     switch (e.code){
       case 'wrong-password':
+      case 'invalid-credential':
         return const AuthFailure('Invalid email or password. Please try again.');
       case 'user-not-found':
         return const AuthFailure('No account found with this email. Please sign up.');
@@ -56,6 +57,10 @@ class AuthRepository{
         return const AuthFailure('The email address is not valid. Please enter a valid email.');
       case 'weak-password':
         return const AuthFailure('The password is too weak. Please choose a stronger password.');
+      case 'too-many-requests':
+        return const AuthFailure('Too many failed attempts. Please try again later.');
+      case 'network-request-failed':
+        return const AuthFailure('Network error. Please check your internet connection.');
       default:
         return const AuthFailure('An unknown error occurred. Please try again later.');
     }

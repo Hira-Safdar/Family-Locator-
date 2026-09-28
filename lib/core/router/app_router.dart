@@ -2,12 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/login_screen.dart';
-import '../../features/home_map/home_map_screen.dart';
+import '../../features/auth/signup_screen.dart';
+import '../../features/group_setup/create_group_screen.dart';
+import '../../features/group_setup/join_group_screen.dart';
+import '../../features/shell/home_shell.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../providers/auth_provider.dart';
-import '../../features/auth/signup_screen.dart';
-
-
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -20,7 +20,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loggedIn = authState.asData?.value != null;
 
       if (!loggedIn) {
-        if (state.matchedLocation == '/login' || state.matchedLocation == '/signup') return null;
+        if (state.matchedLocation == '/login' ||
+            state.matchedLocation == '/signup') {
+          return null;
+        }
         return '/login';
       }
 
@@ -34,8 +37,16 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
+      GoRoute(
+        path: '/create-group',
+        builder: (context, state) => const CreateGroupScreen(),
+      ),
+      GoRoute(
+        path: '/join-group',
+        builder: (context, state) => const JoinGroupScreen(),
+      ),
     ],
   );
 });
