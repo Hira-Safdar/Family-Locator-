@@ -24,3 +24,6 @@ class GroupAlreadyMemberFailure extends Failure{
   const GroupAlreadyMemberFailure(super.message);
 }
 
+class LocationPermissionFailure extends Failure{
+  const LocationPermissionFailure(super.message);
+}
