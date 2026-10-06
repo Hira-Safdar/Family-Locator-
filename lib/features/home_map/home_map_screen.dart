@@ -224,19 +224,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           Positioned(
             right: 12,
-            bottom: 64,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _zoomButton(Icons.add, () => _zoom(1)),
-                const SizedBox(height: 8),
-                _zoomButton(Icons.remove, () => _zoom(-1)),
-              ],
-            ),
-          ),
-
-          Positioned(
-            right: 12,
             bottom: 16,
             child: FloatingActionButton(
               heroTag: 'center',
@@ -249,14 +236,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  void _zoom(int amount) {
-    final controller = _mapController;
-    if (controller == null) return;
-    controller.moveCamera(
-      amount > 0 ? CameraUpdate.zoomIn() : CameraUpdate.zoomOut(),
     );
   }
 
@@ -529,26 +508,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       );
-}
-
-Widget _zoomButton(IconData icon, VoidCallback onTap) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        shape: BoxShape.circle,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Icon(icon, color: AppColors.textDark),
-    ),
-  );
 }
