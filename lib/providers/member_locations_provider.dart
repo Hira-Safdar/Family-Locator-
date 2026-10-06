@@ -39,10 +39,12 @@ Stream<Map<String, LocationPoint?>> _combineMemberLocations(
   final subs = <StreamSubscription<LocationPoint?>>[];
 
   for (final uid in memberIds) {
-    subs.add(repo.latestPoint(uid).listen((point) {
-      latest[uid] = point;
-      if (!controller.isClosed) controller.add(Map.of(latest));
-    }));
+    subs.add(
+      repo.latestPoint(uid).handleError((_) {}).listen((point) {
+        latest[uid] = point;
+        if (!controller.isClosed) controller.add(Map.of(latest));
+      }),
+    );
   }
 
   try {

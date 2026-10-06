@@ -230,8 +230,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               mini: true,
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.textDark,
-              onPressed: _centerOnMe,
-              child: const Icon(Icons.my_location),
+              tooltip: 'Show everyone',
+              onPressed: _showEveryone,
+              child: const Icon(Icons.fit_screen),
             ),
           ),
         ],
@@ -239,16 +240,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _centerOnMe() {
-    final point = ref.read(myLocationProvider).value;
+  void _showEveryone() {
     final controller = _mapController;
-    if (point == null || controller == null) return;
-    controller.moveCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(point.latitude, point.longitude),
-          zoom: 15,
+    if (controller == null) return;
+
+    final members = ref.read(memberLocationsProvider).value ?? const {};
+    final myPoint = ref.read(myLocationProvider).value;
+
+    final points = <LatLng>[
+      for (final p in members.values) LatLng(p.latitude, p.longitude),
+      if (myPoint != null) LatLng(myPoint.latitude, myPoint.longitude),
+    ];
+    if (points.isEmpty) return;
+
+    if (points.length == 1) {
+      controller.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: points.first, zoom: 15),
         ),
+      );
+      return;
+    }
+
+    var minLat = points.first.latitude;
+    var maxLat = points.first.latitude;
+    var minLng = points.first.longitude;
+    var maxLng = points.first.longitude;
+    for (final p in points) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+
+    if (minLat == maxLat && minLng == maxLng) {
+      controller.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: points.first, zoom: 16),
+        ),
+      );
+      return;
+    }
+
+    controller.moveCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        ),
+        90,
       ),
     );
   }
