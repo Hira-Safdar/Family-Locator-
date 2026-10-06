@@ -73,6 +73,14 @@ class GroupRepository {
       throw const NetworkFailure('Failed to join group. Please check your internet connection and try again.');
     }
     }
+    Stream<List<GroupModel>> groupsContaining(String uid) {
+      return _firestore
+          .collection('groups')
+          .where('memberIds', arrayContains: uid)
+          .snapshots()
+          .map((q) => q.docs.map((doc) => GroupModel.fromJson(doc.data())).toList());
+    }
+
     Stream<List<GroupModel>> getUserGroups() {
       final uid = _authService.currentUserId;
       return _firestore

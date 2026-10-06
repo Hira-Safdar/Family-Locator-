@@ -2,14 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/auth_repository.dart';
 import '../data/services/firebase_auth_services.dart';
+import '../data/services/firestore_services.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository(FirebaseAuthServices());
+  return AuthRepository(FirebaseAuthServices(), FirestoreServices());
 });
 
 final authStateProvider = StreamProvider<String?>((ref) {
   final repo = ref.watch(authRepositoryProvider);
   return repo.authStateChanges();
+});
+
+final userNameProvider = FutureProvider.family<String?, String>((ref, uid) {
+  return ref.watch(authRepositoryProvider).userName(uid);
 });
 
 class AuthController extends AsyncNotifier<void> {
@@ -19,7 +24,9 @@ class AuthController extends AsyncNotifier<void> {
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
     try {
-      await ref.read(authRepositoryProvider).signIn(email: email, password: password);
+      await ref
+          .read(authRepositoryProvider)
+          .signIn(email: email, password: password);
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -34,7 +41,9 @@ class AuthController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     try {
-      await ref.read(authRepositoryProvider).signUp(email: email, password: password, name: name);
+      await ref
+          .read(authRepositoryProvider)
+          .signUp(email: email, password: password, name: name);
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -47,4 +56,5 @@ class AuthController extends AsyncNotifier<void> {
   }
 }
 
-final authControllerProvider = AsyncNotifierProvider<AuthController, void>(AuthController.new);
+final authControllerProvider =
+    AsyncNotifierProvider<AuthController, void>(AuthController.new);

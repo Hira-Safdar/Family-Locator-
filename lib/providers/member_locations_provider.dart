@@ -12,7 +12,14 @@ final memberLocationsProvider = StreamProvider<Map<String, LocationPoint>>((ref)
   final repo = ref.watch(locationRepositoryProvider);
   final groups = ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
   if (groups.isEmpty) return Stream.value(const <String, LocationPoint>{});
-  return _combineMemberLocations(groups.first.memberIds, repo).map(
+
+  final selectedId = ref.watch(selectedGroupIdProvider);
+  final active = groups.firstWhere(
+    (g) => g.id == selectedId,
+    orElse: () => groups.first,
+  );
+
+  return _combineMemberLocations(active.memberIds, repo).map(
     (map) => Map<String, LocationPoint>.fromEntries(
       map.entries
           .where((entry) => entry.value != null)

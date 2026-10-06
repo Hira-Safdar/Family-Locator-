@@ -3,11 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import '../../core/errors/failure.dart';
 import '../models/user_model.dart';
 import '../services/firebase_auth_services.dart';
+import '../services/firestore_services.dart';
 
-class AuthRepository{
-  AuthRepository(this._authService);
-  
+class AuthRepository {
+  AuthRepository(this._authService, this._firestore);
+
   final FirebaseAuthServices _authService;
+  final FirestoreServices _firestore;
 
   Stream<String?> authStateChanges() {
     return _authService.authStateChanges().map((user) => user?.uid);
@@ -17,52 +19,86 @@ class AuthRepository{
     required String email,
     required String password,
     required String name,
-  }) async{
-    try{
-      await _authService.signUp(email:email,password:password, name:name);
+  }) async {
+    try {
+      await _authService.signUp(email: email, password: password, name: name);
       final uid = _authService.currentUserId;
-      if(uid == null) {
+      if (uid == null) {
         throw const AuthFailure('Signup Failed. Please try again.');
       }
-      return UserProfile(uid:uid,name:name,email:email);
-    } on fb.FirebaseAuthException catch (e){
+      try {
+        await _firestore.setDoc(
+          'users/$uid',
+          UserProfile(uid: uid, name: name, email: email).toJson(),
+        );
+      } catch (_) {}
+      return UserProfile(uid: uid, name: name, email: email);
+    } on Failure {
+      rethrow;
+    } on fb.FirebaseAuthException catch (e) {
       throw _mapAuthError(e);
-    } catch (_){
-      throw const NetworkFailure('Check your internet connection and try again.');
+    } catch (_) {
+      throw const NetworkFailure(
+        'Check your internet connection and try again.',
+      );
     }
   }
 
-  Future<void> signIn({required String email, required String password}) async{
-    try{
-      await _authService.signIn(email:email,password:password);
-    } on fb.FirebaseAuthException catch (e){
+  Future<void> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _authService.signIn(email: email, password: password);
+    } on fb.FirebaseAuthException catch (e) {
       throw _mapAuthError(e);
-    } catch (_){
-      throw const NetworkFailure('Check your internet connection and try again.');
+    } catch (_) {
+      throw const NetworkFailure(
+        'Check your internet connection and try again.',
+      );
     }
   }
 
   Future<void> signOut() => _authService.signOut();
 
-  AuthFailure _mapAuthError(fb.FirebaseAuthException e){
-    switch (e.code){
+  Future<String?> userName(String uid) async {
+    final data = await _firestore.getDoc('users/$uid');
+    return data?['name'] as String?;
+  }
+
+  AuthFailure _mapAuthError(fb.FirebaseAuthException e) {
+    switch (e.code) {
       case 'wrong-password':
       case 'invalid-credential':
         return const AuthFailure('Invalid email or password. Please try again.');
       case 'user-not-found':
-        return const AuthFailure('No account found with this email. Please sign up.');
+        return const AuthFailure(
+          'No account found with this email. Please sign up.',
+        );
       case 'email-already-in-use':
-        return const AuthFailure('This email is already in use. Please sign in or use a different email.');
+        return const AuthFailure(
+          'This email is already in use. Please sign in or use a different email.',
+        );
       case 'invalid-email':
-        return const AuthFailure('The email address is not valid. Please enter a valid email.');
+        return const AuthFailure(
+          'The email address is not valid. Please enter a valid email.',
+        );
       case 'weak-password':
-        return const AuthFailure('The password is too weak. Please choose a stronger password.');
+        return const AuthFailure(
+          'The password is too weak. Please choose a stronger password.',
+        );
       case 'too-many-requests':
-        return const AuthFailure('Too many failed attempts. Please try again later.');
+        return const AuthFailure(
+          'Too many failed attempts. Please try again later.',
+        );
       case 'network-request-failed':
-        return const AuthFailure('Network error. Please check your internet connection.');
+        return const AuthFailure(
+          'Network error. Please check your internet connection.',
+        );
       default:
-        return const AuthFailure('An unknown error occurred. Please try again later.');
+        return const AuthFailure(
+          'An unknown error occurred. Please try again later.',
+        );
     }
   }
 }

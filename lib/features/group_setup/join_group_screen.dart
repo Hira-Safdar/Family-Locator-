@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../core/constants/app_config.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
 import '../../providers/group_provider.dart';
 import '../../shared_widgets/custom_button.dart';
@@ -124,6 +125,23 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                 label: 'Join Group',
                 isLoading: state.isLoading,
                 onPressed: _submit,
+              ),
+               const SizedBox(height: 12),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  side: const BorderSide(color: AppColors.primary),
+                  foregroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _scanQr,
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text(
+                  'Scan QR Code',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           ),

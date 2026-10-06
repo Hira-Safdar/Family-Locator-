@@ -53,3 +53,18 @@ class GroupController extends AsyncNotifier<void> {
 
 final groupControllerProvider =
     AsyncNotifierProvider<GroupController, void>(GroupController.new);
+
+class SelectedGroupId extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void select(String? id) => state = id;
+}
+
+final selectedGroupIdProvider =
+    NotifierProvider<SelectedGroupId, String?>(SelectedGroupId.new);
+
+final memberGroupsProvider =
+    StreamProvider.family<List<GroupModel>, String>((ref, uid) {
+  return ref.watch(groupRepositoryProvider).groupsContaining(uid);
+});

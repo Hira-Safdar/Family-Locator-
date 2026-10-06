@@ -15,6 +15,11 @@ class FirestoreServices{
     return _db.doc(path).snapshots();
   }
 
+  Future<Map<String, dynamic>?> getDoc(String path) async {
+    final snap = await _db.doc(path).get();
+    return snap.data();
+  }
+
   CollectionReference<Map<String, dynamic>> collection(String path) {
     return _db.collection(path);
   }
