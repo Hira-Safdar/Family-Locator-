@@ -16,4 +16,7 @@ abstract final class AppColors{
   static const success = Color(0xFF388E3C);
   static const warning = Color(0xFFFBC02D);
 
+  static const secondary = Color(0xFFEF6C00);
+  static const onSecondary = Color(0xFFFFFFFF);
+
 }

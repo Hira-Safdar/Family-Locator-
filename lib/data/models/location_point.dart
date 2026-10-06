@@ -15,17 +15,17 @@ class LocationPoint {
 
   factory LocationPoint.fromJson(Map<String, dynamic> json) => LocationPoint(
     latitude: (json['latitude'] as num).toDouble(),
-    longitude: (json['logitude'] as num).toDouble(),
+    longitude: (json['longitude'] as num).toDouble(),
     timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestampMs'] as int),
-    batteryLevel: json['batterLevel'] as int?,
+    batteryLevel: json['batteryLevel'] as int?,
     accuracy: (json['accuracy'] as num?)?.toDouble(),
   );
 
-Map<String, dynamic> toJson() => {
-  'latitude': latitude,
-  'logitude': longitude,
-  'timestampMs': timestamp.millisecondsSinceEpoch,
-  'batteryLevel': batteryLevel,
-  'accuracy': accuracy,
-};
+  Map<String, dynamic> toJson() => {
+    'latitude': latitude,
+    'longitude': longitude,
+    'timestampMs': timestamp.millisecondsSinceEpoch,
+    'batteryLevel': batteryLevel,
+    'accuracy': accuracy,
+  };
 }
