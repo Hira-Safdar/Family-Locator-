@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../features/group_setup/groups_screen.dart';
-import '../../features/home_map/home_map_screen.dart';
-import '../../features/settings/settings_screen.dart';
+import '../group_setup/groups_screen.dart';
+import '../home_map/home_map_screen.dart';
+import '../settings/settings_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
