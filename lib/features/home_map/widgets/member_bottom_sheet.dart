@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart' hide DistanceCalculator;
+import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/distance_calculator.dart';

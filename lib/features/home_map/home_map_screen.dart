@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
@@ -17,9 +16,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  static const LatLng _fallback = LatLng(30.3753, 69.3451);
+  static final LatLng _fallback = LatLng(30.3753, 69.3451);
 
-  final MapController _mapController = MapController();
+  GoogleMapController? _mapController;
   bool _centered = false;
 
   @override
@@ -32,7 +31,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
-    _mapController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
@@ -40,11 +39,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     ref.listen(myLocationProvider, (prev, next) {
       final point = next.value;
-      if (point != null && !_centered) {
+      final controller = _mapController;
+      if (point != null && !_centered && controller != null) {
         _centered = true;
-        _mapController.move(
-          LatLng(point.latitude, point.longitude),
-          15,
+        controller.moveCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(point.latitude, point.longitude),
+              zoom: 15,
+            ),
+          ),
         );
       }
     });
@@ -57,26 +61,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         (ref.watch(myGroupsStreamProvider).value ?? const []).isNotEmpty;
     final hasError = ref.watch(locationControllerProvider).hasError;
 
-    final markers = <Marker>[];
+    final markers = <Marker>{};
     if (myPoint != null) {
-      markers.add(Marker(
-        point: LatLng(myPoint.latitude, myPoint.longitude),
-        width: 44,
-        height: 44,
-        child: const Icon(
-          Icons.person_pin_circle,
-          color: Colors.blue,
-          size: 44,
+      markers.add(
+        Marker(
+          markerId: const MarkerId('me'),
+          position: LatLng(myPoint.latitude, myPoint.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueGreen,
+          ),
         ),
-      ));
+      );
     }
     groupLocations.forEach((uid, point) {
       if (uid == selfUid) return;
-      markers.add(Marker(
-        point: LatLng(point.latitude, point.longitude),
-        width: 40,
-        height: 40,
-        child: GestureDetector(
+      markers.add(
+        Marker(
+          markerId: MarkerId(uid),
+          position: LatLng(point.latitude, point.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueOrange,
+          ),
           onTap: () => showMemberSheet(
             context,
             uid: uid,
@@ -85,31 +90,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ? null
                 : LatLng(myPoint.latitude, myPoint.longitude),
           ),
-          child: const Icon(
-            Icons.person_pin_circle,
-            color: Colors.orange,
-            size: 40,
-          ),
         ),
-      ));
+      );
     });
 
     return Scaffold(
       body: Stack(
         children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: const MapOptions(
-              initialCenter: _fallback,
-              initialZoom: 6,
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: _fallback,
+              zoom: 6,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.mylocator.familylocator',
-              ),
-              MarkerLayer(markers: markers),
-            ],
+            onMapCreated: (controller) => _mapController = controller,
+            markers: markers,
+            myLocationEnabled: false,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            compassEnabled: true,
+            scrollGesturesEnabled: true,
+            zoomGesturesEnabled: true,
           ),
           if (hasError)
             Align(
@@ -152,10 +153,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _centerOnMe() {
     final point = ref.read(myLocationProvider).value;
-    if (point == null) return;
-    _mapController.move(
-      LatLng(point.latitude, point.longitude),
-      15,
+    final controller = _mapController;
+    if (point == null || controller == null) return;
+    controller.moveCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(point.latitude, point.longitude),
+          zoom: 15,
+        ),
+      ),
     );
   }
 }
