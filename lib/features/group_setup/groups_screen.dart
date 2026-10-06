@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -18,29 +19,44 @@ class GroupsScreen extends ConsumerWidget {
     final groups = ref.watch(myGroupsStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Groups')),
+      appBar: AppBar(title: const Text('All Groups')),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () => context.push('/create-group'),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create'),
-                  ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.push('/join-group'),
-                    icon: const Icon(Icons.input),
-                    label: const Text('Join'),
-                  ),
+              ),
+              onPressed: () => context.push('/create-group'),
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text(
+                'Create Group',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                side: const BorderSide(color: AppColors.primary, width: 1.4),
+                foregroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ],
+              ),
+              onPressed: () => context.push('/join-group'),
+              icon: const Icon(Icons.login),
+              label: const Text(
+                'Join a Group',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
           Expanded(
@@ -52,32 +68,12 @@ class GroupsScreen extends ConsumerWidget {
                     : 'Something went wrong loading your groups.',
               ),
               data: (list) => list.isEmpty
-                  ? const Center(
-                      child: Text('No groups yet.\nCreate or join one with a code.'),
-                    )
+                  ? const _EmptyState()
                   : ListView.builder(
+                      padding: const EdgeInsets.only(top: 8, bottom: 24),
                       itemCount: list.length,
-                      itemBuilder: (context, i) {
-                        final group = list[i];
-                        return ListTile(
-                          leading: const Icon(Icons.group),
-                          title: Text(group.name),
-                          subtitle: Text('Invite code: ${group.inviteCode}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${group.memberIds.length} members',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.qr_code_2),
-                                onPressed: () => _showQr(context, group),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                      itemBuilder: (context, i) =>
+                          _GroupCard(group: list[i]),
                     ),
             ),
           ),
@@ -85,8 +81,165 @@ class GroupsScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  void _showQr(BuildContext context, GroupModel group) {
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.groups_outlined,
+              size: 80,
+              color: AppColors.textLight,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No groups yet',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Create a new group or join an existing one using an invite code.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.textLight),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GroupCard extends StatelessWidget {
+  const _GroupCard({required this.group});
+
+  final GroupModel group;
+
+  void _copyCode(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: group.inviteCode));
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(content: Text('Invite code ${group.inviteCode} copied')),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final members = group.memberIds.length;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: AppColors.primaryContainer,
+            child: Text(
+              group.name.isEmpty
+                  ? '?'
+                  : group.name[0].toUpperCase(),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  group.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.group_outlined,
+                      size: 15,
+                      color: AppColors.textLight,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$members member${members == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: () => _copyCode(context),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      group.inviteCode,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 3,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Show QR',
+            icon: const Icon(Icons.qr_code_2),
+            color: AppColors.primary,
+            onPressed: () => _showQr(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showQr(BuildContext context) {
     final qrCode = QrCode.fromData(
       data: group.inviteCode,
       errorCorrectLevel: QrErrorCorrectLevel.M,
@@ -102,7 +255,7 @@ class GroupsScreen extends ConsumerWidget {
               child: const Icon(Icons.qr_code_2, color: AppColors.primary),
             ),
             const SizedBox(width: 12),
-            const Text('Invite QR'),
+            const Expanded(child: Text('Invite QR')),
           ],
         ),
         content: Column(
@@ -115,7 +268,10 @@ class GroupsScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primaryContainer, width: 2),
+                border: Border.all(
+                  color: AppColors.primaryContainer,
+                  width: 2,
+                ),
               ),
               child: CustomPaint(
                 painter: QrPainter.withQr(qr: qrCode, gapless: true),
@@ -124,6 +280,7 @@ class GroupsScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               group.name,
+              textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
                   .titleMedium
