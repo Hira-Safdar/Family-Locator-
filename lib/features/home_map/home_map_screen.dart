@@ -89,29 +89,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    final placed = <LatLng>[
+      if (myPoint != null) LatLng(myPoint.latitude, myPoint.longitude),
+    ];
     final markers = <Marker>{};
     if (myPoint != null) {
       markers.add(
         Marker(
           markerId: const MarkerId('me'),
-          position: LatLng(myPoint.latitude, myPoint.longitude),
+          position: placed.first,
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueGreen,
           ),
+          zIndexInt: 1,
         ),
       );
     }
     groupLocations.forEach((uid, point) {
       if (uid == selfUid) return;
       final selected = uid == _selectedUid;
+      final position = _spread(
+        LatLng(point.latitude, point.longitude),
+        placed,
+      );
+      placed.add(position);
       markers.add(
         Marker(
           markerId: MarkerId(uid),
-          position: LatLng(point.latitude, point.longitude),
+          position: position,
           icon: BitmapDescriptor.defaultMarkerWithHue(
             selected ? BitmapDescriptor.hueRed : BitmapDescriptor.hueOrange,
           ),
-          zIndexInt: selected ? 2 : 1,
+          zIndexInt: selected ? 3 : 2,
           onTap: () => setState(() {
             _selectedUid = uid;
             _selectedPoint = point;
@@ -291,6 +300,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         90,
       ),
     );
+  }
+
+  static const List<Offset> _ring = [
+    Offset(0.0005, 0),
+    Offset(-0.0005, 0),
+    Offset(0, 0.0005),
+    Offset(0, -0.0005),
+    Offset(0.0005, 0.0005),
+    Offset(-0.0005, -0.0005),
+    Offset(0.0005, -0.0005),
+    Offset(-0.0005, 0.0005),
+  ];
+
+  LatLng _spread(LatLng base, List<LatLng> placed) {
+    if (!_hits(base, placed)) return base;
+    for (final off in _ring) {
+      final cand = LatLng(base.latitude + off.dx, base.longitude + off.dy);
+      if (!_hits(cand, placed)) return cand;
+    }
+    return base;
+  }
+
+  bool _hits(LatLng point, List<LatLng> placed) {
+    for (final other in placed) {
+      final meters = DistanceCalculator.metersBetween(
+        point.latitude,
+        point.longitude,
+        other.latitude,
+        other.longitude,
+      );
+      if (meters < 45) return true;
+    }
+    return false;
   }
 
   Widget _groupBox(
