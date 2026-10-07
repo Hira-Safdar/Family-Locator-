@@ -29,4 +29,10 @@ class FirestoreServices{
     ) async{
       return _db.runTransaction(action);
     }
+
+  Future<T> transaction<T>(
+    Future<T> Function(Transaction tx) action,
+  ) {
+    return _db.runTransaction<T>(action);
+  }
 }

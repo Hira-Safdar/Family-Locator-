@@ -32,12 +32,9 @@ class GroupsScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              onPressed: () => context.push('/create-group'),
+              onPressed: () => context.push('/choose-group'),
               icon: const Icon(Icons.add_circle_outline),
-              label: const Text(
-                'Create Group',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
+              label: const Text('Create Group'),
             ),
           ),
           Padding(
@@ -53,19 +50,19 @@ class GroupsScreen extends ConsumerWidget {
               ),
               onPressed: () => context.push('/join-group'),
               icon: const Icon(Icons.login),
-              label: const Text(
-                'Join a Group',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
+              label: const Text('Join a Group'),
             ),
           ),
           Expanded(
             child: groups.when(
-              loading: () => const LoadingIndicator(),
+              loading: () => LoadingIndicator(
+                onRetry: () => ref.invalidate(myGroupsStreamProvider),
+              ),
               error: (e, st) => ErrorView(
                 message: e is Failure
                     ? e.message
                     : 'Something went wrong loading your groups.',
+                onRetry: () => ref.invalidate(myGroupsStreamProvider),
               ),
               data: (list) => list.isEmpty
                   ? const _EmptyState()
@@ -102,16 +99,15 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'No groups yet',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Create a new group or join an existing one using an invite code.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.textLight),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textLight,
+                  ),
             ),
           ],
         ),
@@ -173,15 +169,35 @@ class _GroupCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  group.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        group.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        group.category,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -194,10 +210,7 @@ class _GroupCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '$members member${members == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textLight,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
@@ -216,12 +229,13 @@ class _GroupCard extends StatelessWidget {
                     ),
                     child: Text(
                       group.inviteCode,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 3,
-                        color: AppColors.primary,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(
+                            letterSpacing: 3,
+                            color: AppColors.primary,
+                          ),
                     ),
                   ),
                 ),
@@ -281,10 +295,7 @@ class _GroupCard extends StatelessWidget {
             Text(
               group.name,
               textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Container(
@@ -295,12 +306,10 @@ class _GroupCard extends StatelessWidget {
               ),
               child: Text(
                 group.inviteCode,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 4,
-                ),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.primary,
+                      letterSpacing: 4,
+                    ),
               ),
             ),
           ],

@@ -17,7 +17,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          _sectionHeader('Manage Permissions'),
+          _sectionHeader(context, 'Manage Permissions'),
           ListTile(
             leading: const Icon(Icons.location_on_outlined),
             title: const Text('Location Permission'),
@@ -36,7 +36,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
 
-          _sectionHeader('General'),
+          _sectionHeader(context, 'General'),
           ListTile(
             leading: const Icon(Icons.language),
             title: const Text('Language'),
@@ -68,7 +68,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () {},
           ),
 
-          _sectionHeader('Others'),
+          _sectionHeader(context, 'Others'),
           ListTile(
             leading: const Icon(Icons.share),
             title: const Text('Share'),
@@ -108,17 +108,15 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _sectionHeader(String title) {
+  Widget _sectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textLight,
-          letterSpacing: 0.5,
-        ),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: AppColors.textLight,
+              letterSpacing: 0.5,
+            ),
       ),
     );
   }

@@ -20,6 +20,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
   final _codeController = TextEditingController();
   String? _codeError;
   String? _serverError;
+  bool _locked = false;
 
   Future<void> _scanQr() async {
     final scanned = await showDialog<String>(
@@ -59,15 +60,22 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
     setState(() {
       _codeError = null;
       _serverError = null;
+      _locked = true;
     });
     final controller = ref.read(groupControllerProvider.notifier);
     try {
       await controller.joinGroup(inviteCode: code);
       if (mounted) context.pop();
     } on Failure catch (e) {
-      setState(() => _serverError = e.message);
+      setState(() {
+        _locked = false;
+        _serverError = e.message;
+      });
     } catch (_) {
-      setState(() => _serverError = 'Something went wrong. Please try again.');
+      setState(() {
+        _locked = false;
+        _serverError = 'Something went wrong. Please try again.';
+      });
     }
   }
 
@@ -93,6 +101,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
               const SizedBox(height: 24),
               TextField(
                 controller: _codeController,
+                enabled: !_locked,
                 textCapitalization: TextCapitalization.characters,
                 textInputAction: TextInputAction.done,
                 maxLength: AppConfig.inviteCodelength,
@@ -101,7 +110,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                   prefixIcon: const Icon(Icons.key),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.qr_code_scanner),
-                    onPressed: _scanQr,
+                    onPressed: _locked ? null : _scanQr,
                   ),
                   errorText: _codeError,
                 ),
@@ -136,12 +145,9 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: _scanQr,
+                onPressed: _locked ? null : _scanQr,
                 icon: const Icon(Icons.qr_code_scanner),
-                label: const Text(
-                  'Scan QR Code',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
+                label: const Text('Scan QR Code'),
               ),
             ],
           ),

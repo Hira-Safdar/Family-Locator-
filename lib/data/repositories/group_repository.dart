@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../core/constants/group_categories.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/code_generator.dart';
 import '../models/group_model.dart';
@@ -12,29 +13,117 @@ class GroupRepository {
   final FirestoreServices _firestore;
   final FirebaseAuthServices _authService;
 
+  Future<GroupModel> createGroup({
+    required String name,
+    String category = GroupCategories.custom,
+  }) async {
+    try {
+      final ownerId = _authService.currentUserId;
+      if (ownerId == null) {
+        throw const AuthFailure('You need to be signed in to create a group.');
+      }
 
-  Future<GroupModel> createGroup({required String name}) async {
-    try{
-    final ownerId = _authService.currentUserId;
-    if (ownerId == null) {
-      throw const AuthFailure('You need to be signed in to create a group.');
-    }
-    final groupRef =_firestore.collection('groups').doc();
-    final group = GroupModel(
-      id: groupRef.id,
-      name: name,
-      inviteCode: CodeGenerator.generate(),
-      ownerId: ownerId,
-      memberIds: [ownerId],
-      createdAt: DateTime.now()
-    );
-    await _firestore.setDoc('groups/${group.id}', group.toJson());
-    return group;
+      final template = GroupModel(
+        id: '',
+        name: name,
+        category: category,
+        inviteCode: CodeGenerator.generate(),
+        ownerId: ownerId,
+        memberIds: [ownerId],
+        createdAt: DateTime.now(),
+      );
+
+      final base = uniqueId(name: name, category: category);
+      var attempt = 0;
+      while (true) {
+        final candidate = attempt == 0 ? base : '${base}_$attempt';
+
+        final reserved = await _reserve(candidate, template);
+        if (reserved != null) {
+          return GroupModel(
+            id: reserved,
+            name: template.name,
+            category: template.category,
+            inviteCode: template.inviteCode,
+            ownerId: template.ownerId,
+            memberIds: template.memberIds,
+            createdAt: template.createdAt,
+          );
+        }
+
+        attempt++;
+        if (attempt > 50) {
+          throw const FirestoreFailure(
+            'That group name is taken too many times. Please pick a different name.',
+          );
+        }
+      }
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
-    } catch(_) {
-      throw const NetworkFailure('Failed to create group. Please check your internet connection and try again.');  
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Failed to create group. Please check your internet connection and try again.',
+      );
     }
+  }
+
+  Future<String?> _reserve(String docId, GroupModel template) {
+    return _firestore.transaction<String?>((tx) async {
+      final ref = _firestore.collection('groups').doc(docId);
+      final snap = await tx.get(ref);
+      if (snap.exists) return null;
+      tx.set(ref, template.toJson()..['id'] = docId);
+      return docId;
+    });
+  }
+
+  String uniqueId({required String name, required String category}) {
+    return '${slug(category)}_${slug(name)}';
+  }
+
+  String slug(String value) {
+    final parts = value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    return parts.isEmpty ? 'group' : parts.join('_');
+  }
+
+  Future<bool> isNameTaken({
+    required String name,
+    required String category,
+  }) async {
+    try {
+      final data = await _firestore.getDoc('groups/${uniqueId(name: name, category: category)}');
+      return data != null;
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not check that group name. Please check your internet connection and try again.',
+      );
+    }
+  }
+
+  Future<List<String>> suggestNames({
+    required String name,
+    required String category,
+    int count = 2,
+  }) async {
+    final suggestions = <String>[];
+    var index = 0;
+    while (suggestions.length < count && index < 10) {
+      final candidate = index == 0 ? name : '$name $index';
+      final taken = await isNameTaken(name: candidate, category: category);
+      if (!taken) suggestions.add(candidate);
+      index++;
+    }
+    return suggestions;
   }
 
   Future<GroupModel> joinGroup({required String inviteCode}) async {
@@ -69,6 +158,8 @@ class GroupRepository {
           return group.copyWith(memberIds: newMember);
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
     } catch (_) {
       throw const NetworkFailure('Failed to join group. Please check your internet connection and try again.');
     }
@@ -83,14 +174,12 @@ class GroupRepository {
 
     Stream<List<GroupModel>> getUserGroups() {
       final uid = _authService.currentUserId;
-      return _firestore
-          .collection('groups')
-          .where('memberIds', arrayContains: uid)
-          .snapshots()
-          .map((q) => q.docs.map((doc) => GroupModel.fromJson(doc.data())).toList());
+      if (uid == null) return Stream<List<GroupModel>>.value(const []);
+      return groupsContaining(uid);
     }
 
     Stream<GroupModel> groupStream(String groupId) {
+      if (groupId.isEmpty) return Stream<GroupModel>.error(const GroupNotFoundFailure('This group no longer exists.'));
       return _firestore
           .docStream('groups/$groupId')
           .map((snap) => GroupModel.fromJson(snap.data() ?? {}));

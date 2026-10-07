@@ -21,6 +21,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   String? _emailError;
   String? _passwordError;
   String? _serverError;
+  bool _locked = false;
 
   String? _validateEmail(String email) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
@@ -58,6 +59,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
 
+    setState(() {
+      _locked = true;
+      _serverError = null;
+    });
+
     final controller = ref.read(authControllerProvider.notifier);
     try {
       await controller.signUp(
@@ -67,9 +73,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       );
       if (mounted) context.go('/home');
     } on Failure catch (e) {
-      setState(() => _serverError = e.message);
+      setState(() {
+        _locked = false;
+        _serverError = e.message;
+      });
     } catch (_) {
-      setState(() => _serverError = 'Something went wrong. Please try again.');
+      setState(() {
+        _locked = false;
+        _serverError = 'Something went wrong. Please try again.';
+      });
     }
   }
 
@@ -97,14 +109,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               children: [
                 Text('Create your account',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                    style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 24),
 
                 TextField(
                   controller: _nameController,
+                  enabled: !_locked,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: 'Full Name',
@@ -119,6 +129,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 TextField(
                   controller: _emailController,
+                  enabled: !_locked,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
@@ -134,6 +145,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 TextField(
                   controller: _passwordController,
+                  enabled: !_locked,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(

@@ -28,10 +28,15 @@ class GroupController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  Future<void> createGroup({required String name}) async {
+  Future<void> createGroup({
+    required String name,
+    required String category,
+  }) async {
     state = const AsyncLoading();
     try {
-      await ref.read(groupRepositoryProvider).createGroup(name: name);
+      await ref
+          .read(groupRepositoryProvider)
+          .createGroup(name: name, category: category);
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/group_categories.dart';
+
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/signup_screen.dart';
+import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
 import '../../features/shell/home_shell.dart';
@@ -40,8 +43,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
       GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
       GoRoute(
+        path: '/choose-group',
+        builder: (context, state) => const ChooseGroupScreen(),
+      ),
+      GoRoute(
         path: '/create-group',
-        builder: (context, state) => const CreateGroupScreen(),
+        builder: (context, state) => CreateGroupScreen(
+          category: state.uri.queryParameters['category'] ??
+              GroupCategories.custom,
+        ),
       ),
       GoRoute(
         path: '/join-group',

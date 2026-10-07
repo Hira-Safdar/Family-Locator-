@@ -40,7 +40,7 @@ Stream<Map<String, LocationPoint?>> _combineMemberLocations(
 
   for (final uid in memberIds) {
     subs.add(
-      repo.latestPoint(uid).handleError((_) {}).listen((point) {
+      _withRetry(() => repo.latestPoint(uid)).listen((point) {
         latest[uid] = point;
         if (!controller.isClosed) controller.add(Map.of(latest));
       }),
@@ -55,4 +55,38 @@ Stream<Map<String, LocationPoint?>> _combineMemberLocations(
     }
     unawaited(controller.close());
   }
+}
+
+Stream<LocationPoint?> _withRetry(
+  Stream<LocationPoint?> Function() source,
+) {
+  const maxAttempts = 5;
+  final controller = StreamController<LocationPoint?>();
+  StreamSubscription<LocationPoint?>? sub;
+  Timer? timer;
+
+  void connect(int attempt) {
+    sub = source().listen(
+      controller.add,
+      onError: (Object _) {
+        if (controller.isClosed) return;
+        if (attempt >= maxAttempts - 1) {
+          controller.close();
+          return;
+        }
+        timer = Timer(Duration(milliseconds: 500 * (1 << attempt)), () {
+          if (!controller.isClosed) connect(attempt + 1);
+        });
+      },
+      onDone: controller.close,
+      cancelOnError: true,
+    );
+  }
+
+  controller.onListen = () => connect(0);
+  controller.onCancel = () async {
+    timer?.cancel();
+    await sub?.cancel();
+  };
+  return controller.stream;
 }

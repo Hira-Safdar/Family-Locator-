@@ -21,6 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   String? _serverError;
+  bool _locked = false;
 
   String? _validateEmail(String email) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
@@ -42,14 +43,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    setState(() {
+      _locked = true;
+      _serverError = null;
+    });
+
     final controller = ref.read(authControllerProvider.notifier);
     try {
       await controller.signIn(email: email, password: password);
       if (mounted) context.go('/home');
     } on Failure catch (e) {
-      setState(() => _serverError = e.message);
+      setState(() {
+        _locked = false;
+        _serverError = e.message;
+      });
     } catch (_) {
-      setState(() => _serverError = 'Something went wrong. Please try again.');
+      setState(() {
+        _locked = false;
+        _serverError = 'Something went wrong. Please try again.';
+      });
     }
   }
 
@@ -82,10 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Text(
                   AppStrings.loginTitle,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -99,6 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 32),
                 TextField(
                   controller: _emailController,
+                  enabled: !_locked,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
@@ -113,6 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
+                  enabled: !_locked,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/errors/failure.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/utils/distance_calculator.dart';
 import '../../data/models/group_model.dart';
@@ -11,6 +12,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/member_locations_provider.dart';
+import '../../shared_widgets/loading_indicator.dart';
+import '../../shared_widgets/offline_view.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -72,13 +75,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     final myPoint = ref.watch(myLocationProvider).value;
-    final groupLocations =
-        ref.watch(memberLocationsProvider).value ?? const {};
+    final locationsAsync = ref.watch(memberLocationsProvider);
+    final groupLocations = locationsAsync.value ?? const {};
     final selfUid = ref.watch(authStateProvider).value;
-    final groups =
-        ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
+    final groupsAsync = ref.watch(myGroupsStreamProvider);
+    final groups = groupsAsync.value ?? const <GroupModel>[];
     final hasGroup = groups.isNotEmpty;
-    final hasError = ref.watch(locationControllerProvider).hasError;
+    final locationError = ref.watch(locationControllerProvider);
+    final hasError = locationError.hasError || locationsAsync.hasError;
     final selectedGroupId = ref.watch(selectedGroupIdProvider);
 
     GroupModel? activeGroup;
@@ -173,13 +177,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: AppColors.primary,
                     ),
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Live Tracking',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textDark,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const Spacer(),
                   ],
@@ -199,14 +199,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      '${ref.watch(locationControllerProvider).error}',
+                      locationError.hasError
+                          ? (locationError.error is Failure
+                              ? (locationError.error as Failure).message
+                              : 'Something went wrong. Please check your internet connection and try again.')
+                          : 'Could not load member locations. Please check your internet connection and try again.',
                     ),
                   ),
                 ),
               ),
             ),
 
-          if (!hasGroup)
+          if (groupsAsync.isLoading)
+            Align(
+              alignment: Alignment.center,
+              child: LoadingIndicator(
+                onRetry: () => ref.invalidate(myGroupsStreamProvider),
+              ),
+            )
+          else if (groupsAsync.hasError)
+            Align(
+              alignment: Alignment.center,
+              child: OfflineView(
+                onRetry: () => ref.invalidate(myGroupsStreamProvider),
+              ),
+            )
+          else if (!hasGroup)
             const Align(
               alignment: Alignment.center,
               child: Card(
@@ -239,9 +257,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               mini: true,
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.textDark,
-              tooltip: 'Show everyone',
-              onPressed: _showEveryone,
-              child: const Icon(Icons.fit_screen),
+              tooltip: 'My location',
+              onPressed: _centerOnMe,
+              child: const Icon(Icons.my_location),
             ),
           ),
         ],
@@ -249,55 +267,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _showEveryone() {
+  void _centerOnMe() {
     final controller = _mapController;
     if (controller == null) return;
-
-    final members = ref.read(memberLocationsProvider).value ?? const {};
     final myPoint = ref.read(myLocationProvider).value;
-
-    final points = <LatLng>[
-      for (final p in members.values) LatLng(p.latitude, p.longitude),
-      if (myPoint != null) LatLng(myPoint.latitude, myPoint.longitude),
-    ];
-    if (points.isEmpty) return;
-
-    if (points.length == 1) {
-      controller.moveCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: points.first, zoom: 15),
-        ),
-      );
-      return;
-    }
-
-    var minLat = points.first.latitude;
-    var maxLat = points.first.latitude;
-    var minLng = points.first.longitude;
-    var maxLng = points.first.longitude;
-    for (final p in points) {
-      if (p.latitude < minLat) minLat = p.latitude;
-      if (p.latitude > maxLat) maxLat = p.latitude;
-      if (p.longitude < minLng) minLng = p.longitude;
-      if (p.longitude > maxLng) maxLng = p.longitude;
-    }
-
-    if (minLat == maxLat && minLng == maxLng) {
-      controller.moveCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: points.first, zoom: 16),
-        ),
-      );
-      return;
-    }
-
+    if (myPoint == null) return;
     controller.moveCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: LatLng(minLat, minLng),
-          northeast: LatLng(maxLat, maxLng),
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(myPoint.latitude, myPoint.longitude),
+          zoom: 15,
         ),
-        90,
       ),
     );
   }
@@ -362,11 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       active.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
                       '${active.memberIds.length} '
@@ -452,11 +428,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
                   IconButton(
