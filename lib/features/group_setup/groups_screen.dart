@@ -27,6 +27,8 @@ class GroupsScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
                 minimumSize: const Size.fromHeight(52),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -152,7 +154,7 @@ class _GroupCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppColors.primaryContainer,
+            backgroundColor: AppColors.background,
             child: Text(
               group.name.isEmpty
                   ? '?'
@@ -160,7 +162,7 @@ class _GroupCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                color: AppColors.textDark,
               ),
             ),
           ),
@@ -186,13 +188,12 @@ class _GroupCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryContainer,
+                        color: AppColors.background,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         group.category,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.primary,
                               fontWeight: FontWeight.w600,
                             ),
                       ),
@@ -210,7 +211,7 @@ class _GroupCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '$members member${members == 1 ? '' : 's'}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -224,7 +225,7 @@ class _GroupCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
+                      color: AppColors.background,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -245,7 +246,7 @@ class _GroupCard extends StatelessWidget {
           IconButton(
             tooltip: 'Show QR',
             icon: const Icon(Icons.qr_code_2),
-            color: AppColors.primary,
+            color: AppColors.textLight,
             onPressed: () => _showQr(context),
           ),
         ],
@@ -265,8 +266,8 @@ class _GroupCard extends StatelessWidget {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: AppColors.primaryContainer,
-              child: const Icon(Icons.qr_code_2, color: AppColors.primary),
+              backgroundColor: AppColors.background,
+              child: const Icon(Icons.qr_code_2, color: AppColors.textDark),
             ),
             const SizedBox(width: 12),
             const Expanded(child: Text('Invite QR')),
@@ -283,7 +284,7 @@ class _GroupCard extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.primaryContainer,
+                  color: Colors.black12,
                   width: 2,
                 ),
               ),
@@ -301,7 +302,7 @@ class _GroupCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
