@@ -1,15 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_config.dart';
+import '../../core/errors/failure.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/location_provider.dart';
 import '../../providers/settings_provider.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with WidgetsBindingObserver {
+  PermissionStatus _whenInUse = PermissionStatus.denied;
+  PermissionStatus _always = PermissionStatus.denied;
+
+  static const List<int> _intervals = [5, 10, 30, 60];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshPermissions();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshPermissions();
+  }
+
+  Future<void> _refreshPermissions() async {
+    final whenInUse = await Permission.locationWhenInUse.status;
+    final always = await Permission.locationAlways.status;
+    if (!mounted) return;
+    setState(() {
+      _whenInUse = whenInUse;
+      _always = always;
+    });
+  }
+
+  String get _locationLabel {
+    if (_always.isGranted) return 'Always allowed';
+    if (_whenInUse.isGranted) return 'While using the app';
+    if (_whenInUse.isPermanentlyDenied) return 'Denied';
+    return 'Not allowed';
+  }
+
+  Color get _locationColor {
+    if (_always.isGranted || _whenInUse.isGranted) return AppColors.success;
+    if (_whenInUse.isPermanentlyDenied) return AppColors.error;
+    return AppColors.warning;
+  }
+
+  IconData get _locationIcon {
+    if (_always.isGranted || _whenInUse.isGranted) return Icons.check_circle;
+    if (_whenInUse.isPermanentlyDenied) return Icons.block;
+    return Icons.warning_amber;
+  }
+
+  String _intervalLabel(int seconds) =>
+      seconds >= 60 ? 'Every ${seconds ~/ 60} min' : 'Every $seconds seconds';
+
+  Future<void> _showRefreshSheet() async {
+    final current = ref.read(settingsProvider).refreshSeconds;
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final option in _intervals)
+              ListTile(
+                title: Text(_intervalLabel(option)),
+                trailing: option == current
+                    ? const Icon(Icons.check, color: AppColors.primary)
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(option),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || picked == current || !mounted) return;
+    ref.read(settingsProvider.notifier).setRefreshSeconds(picked);
+    await ref.read(locationControllerProvider.notifier).restart();
+  }
+
+  Future<void> _shareApp() async {
+    final link = AppConfig.appLink;
+    if (link.isEmpty) return;
+    await SharePlus.instance.share(ShareParams(text: link));
+  }
+
+  Future<void> _launch(String url) async {
+    if (url.isEmpty) return;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  Future<void> _confirmDelete() async {
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => const _DeleteConfirmDialog(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
 
     return Scaffold(
@@ -21,9 +133,9 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.location_on_outlined),
             title: const Text('Location Permission'),
-            subtitle: const Text('Always allowed'),
-            trailing: const Icon(Icons.check_circle, color: AppColors.success),
-            onTap: () {},
+            subtitle: Text(_locationLabel),
+            trailing: Icon(_locationIcon, color: _locationColor),
+            onTap: openAppSettings,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           SwitchListTile(
@@ -38,25 +150,18 @@ class SettingsScreen extends ConsumerWidget {
 
           _sectionHeader(context, 'General'),
           ListTile(
-            leading: const Icon(Icons.language),
-            title: const Text('Language'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          ListTile(
             leading: const Icon(Icons.sync),
             title: const Text('Location Refresh'),
-            subtitle: const Text('Every 10 seconds'),
+            subtitle: Text(_intervalLabel(settings.refreshSeconds)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: _showRefreshSheet,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.person_outline),
             title: const Text('Update Profile'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () => context.push('/edit-profile'),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
@@ -65,26 +170,29 @@ class SettingsScreen extends ConsumerWidget {
               'Delete Profile',
               style: TextStyle(color: AppColors.error),
             ),
-            onTap: () {},
+            onTap: _confirmDelete,
           ),
 
           _sectionHeader(context, 'Others'),
           ListTile(
             leading: const Icon(Icons.share),
             title: const Text('Share'),
-            onTap: () {},
+            enabled: AppConfig.appLink.isNotEmpty,
+            onTap: _shareApp,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.star_border),
             title: const Text('Rate us'),
-            onTap: () {},
+            enabled: AppConfig.playStoreUrl.isNotEmpty,
+            onTap: () => _launch(AppConfig.playStoreUrl),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.feedback_outlined),
             title: const Text('Feedback'),
-            onTap: () {},
+            enabled: AppConfig.feedbackEmail.isNotEmpty,
+            onTap: () => _launch('mailto:${AppConfig.feedbackEmail}'),
           ),
 
           const SizedBox(height: 24),
@@ -118,6 +226,83 @@ class SettingsScreen extends ConsumerWidget {
               letterSpacing: 0.5,
             ),
       ),
+    );
+  }
+}
+
+class _DeleteConfirmDialog extends ConsumerStatefulWidget {
+  const _DeleteConfirmDialog();
+
+  @override
+  ConsumerState<_DeleteConfirmDialog> createState() =>
+      _DeleteConfirmDialogState();
+}
+
+class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _delete() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).deleteAccount();
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e is Failure ? e.message : 'Could not delete profile.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Delete Profile?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'This permanently removes your account, your location history and '
+            'your membership in every group. This cannot be undone.',
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: AppColors.error),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _busy ? null : _delete,
+          child: _busy
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text(
+                  'Delete',
+                  style: TextStyle(color: AppColors.error),
+                ),
+        ),
+      ],
     );
   }
 }

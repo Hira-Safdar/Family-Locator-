@@ -10,6 +10,10 @@ class FirestoreServices{
   Future<void> updateDoc(String path, Map<String, dynamic> data){
     return _db.doc(path).update(data);
   }
+
+  Future<void> deleteDoc(String path){
+    return _db.doc(path).delete();
+  }
   
   Stream<DocumentSnapshot<Map<String,dynamic>>> docStream(String path){
     return _db.doc(path).snapshots();

@@ -7,6 +7,8 @@ import '../data/services/firebase_auth_services.dart';
 import '../data/services/firestore_services.dart';
 import '../data/services/location_service.dart';
 import 'auth_provider.dart';
+import 'settings_provider.dart';
+
 
 final locationServicesProvider = Provider<LocationServices>((ref){
   return LocationServices();
@@ -53,9 +55,15 @@ class LocationController extends AsyncNotifier<void> {
       return;
     }
     services.stopTracking();
-    services.startTracking(_handlePoint);
+    final seconds = ref.read(settingsProvider).refreshSeconds;
+    services.startTracking(_handlePoint, seconds: seconds);
     ref.read(isSharingProvider.notifier).on();
     state = const AsyncData(null);
+  }
+
+  Future<void> restart() async {
+    if (!ref.read(isSharingProvider)) return;
+    await start();
   }
 
   Future<void> stop() async {

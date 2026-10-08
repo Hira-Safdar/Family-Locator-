@@ -35,9 +35,9 @@ class LocationServices{
     
   }
 
-  void startTracking(LocationListener onUpdate) {
+  void startTracking(LocationListener onUpdate, {int seconds = 10}) {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _timer = Timer.periodic(Duration(seconds: seconds), (_) async {
       try {
         final point = await currentPoint();
         if (!_movedEnough(point)) return;

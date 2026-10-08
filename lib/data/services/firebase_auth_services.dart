@@ -22,5 +22,14 @@ class FirebaseAuthServices{
   }
 
   Future<void> signOut() => _auth.signOut();
+
+  Future<void> updateDisplayName(String name) async {
+    await _auth.currentUser?.updateProfile(displayName: name);
+  }
+
+  Future<void> deleteAccount() async {
+    await _auth.currentUser?.delete();
+  }
+
   String? get currentUserId => _auth.currentUser?.uid;
 }

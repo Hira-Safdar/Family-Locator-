@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 import '../../core/errors/failure.dart';
@@ -61,9 +64,76 @@ class AuthRepository {
 
   Future<void> signOut() => _authService.signOut();
 
+  Future<void> updateProfile({String? name, String? photoFilePath}) async {
+    final uid = _authService.currentUserId;
+    if (uid == null) {
+      throw const AuthFailure('No signed-in account found.');
+    }
+
+    final cleanName = name?.trim();
+    String? photoData;
+    if (photoFilePath != null && photoFilePath.isNotEmpty) {
+      final bytes = await File(photoFilePath).readAsBytes();
+      photoData = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+    }
+
+    final data = <String, dynamic>{
+      if (cleanName != null && cleanName.isNotEmpty) 'name': cleanName,
+      'photoUrl': ?photoData,
+    };
+    if (data.isNotEmpty) {
+      await _firestore.updateDoc('users/$uid', data);
+    }
+    if (cleanName != null && cleanName.isNotEmpty) {
+      await _authService.updateDisplayName(cleanName);
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    final uid = _authService.currentUserId;
+    if (uid == null) {
+      throw const AuthFailure('No signed-in account found.');
+    }
+
+    final groups = await _firestore
+        .collection('groups')
+        .where('memberIds', arrayContains: uid)
+        .get();
+
+    for (final doc in groups.docs) {
+      final data = doc.data();
+      final members = List<String>.from(data['memberIds'] as List? ?? const []);
+      final ownerId = data['ownerId'] as String? ?? '';
+      members.remove(uid);
+
+      if (ownerId == uid) {
+        if (members.isEmpty) {
+          await _firestore.deleteDoc('groups/${doc.id}');
+        } else {
+          await _firestore.updateDoc('groups/${doc.id}', {
+            'ownerId': members.first,
+            'memberIds': members,
+          });
+        }
+      } else {
+        await _firestore.updateDoc('groups/${doc.id}', {
+          'memberIds': members,
+        });
+      }
+    }
+
+    await _firestore.deleteDoc('location_points/$uid');
+    await _firestore.deleteDoc('users/$uid');
+    await _authService.deleteAccount();
+  }
+
   Future<String?> userName(String uid) async {
     final data = await _firestore.getDoc('users/$uid');
     return data?['name'] as String?;
+  }
+
+  Future<Map<String, dynamic>?> userDoc(String uid) {
+    return _firestore.getDoc('users/$uid');
   }
 
   AuthFailure _mapAuthError(fb.FirebaseAuthException e) {
@@ -95,6 +165,12 @@ class AuthRepository {
         return const AuthFailure(
           'Network error. Please check your internet connection.',
         );
+      case 'requires-recent-login':
+        return const AuthFailure(
+          'For security, please log out, sign in again, then retry.',
+        );
+      case 'no-current-user':
+        return const AuthFailure('No signed-in account found.');
       default:
         return const AuthFailure(
           'An unknown error occurred. Please try again later.',

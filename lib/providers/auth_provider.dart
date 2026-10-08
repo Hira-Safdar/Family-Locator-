@@ -17,6 +17,11 @@ final userNameProvider = FutureProvider.family<String?, String>((ref, uid) {
   return ref.watch(authRepositoryProvider).userName(uid);
 });
 
+final userDocProvider =
+    FutureProvider.family<Map<String, dynamic>?, String>((ref, uid) {
+  return ref.watch(authRepositoryProvider).userDoc(uid);
+});
+
 class AuthController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
@@ -44,6 +49,30 @@ class AuthController extends AsyncNotifier<void> {
       await ref
           .read(authRepositoryProvider)
           .signUp(email: email, password: password, name: name);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> updateProfile({String? name, String? photoFilePath}) async {
+    state = const AsyncLoading();
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .updateProfile(name: name, photoFilePath: photoFilePath);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    state = const AsyncLoading();
+    try {
+      await ref.read(authRepositoryProvider).deleteAccount();
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
