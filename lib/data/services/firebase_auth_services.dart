@@ -32,4 +32,5 @@ class FirebaseAuthServices{
   }
 
   String? get currentUserId => _auth.currentUser?.uid;
+  String? get currentUserName => _auth.currentUser?.displayName;
 }

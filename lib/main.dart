@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
+import 'data/services/notification_service.dart';
+import 'providers/notification_provider.dart';
 import 'providers/settings_provider.dart';
 import 'core/constants/app_strings.dart';
 import 'firebase_options.dart';
@@ -17,10 +19,14 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.android,
   );
   final prefs = await SharedPreferences.getInstance();
+  final notifications = NotificationService();
+  await notifications.init();
+  await notifications.requestPermission();
   runApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        notificationServiceProvider.overrideWithValue(notifications),
       ],
       child: const FamilyApp(),
     ),

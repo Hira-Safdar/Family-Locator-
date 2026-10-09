@@ -14,6 +14,10 @@ import '../../providers/location_provider.dart';
 import '../../providers/member_locations_provider.dart';
 import '../../shared_widgets/loading_indicator.dart';
 import '../../shared_widgets/offline_view.dart';
+import '../../data/models/sos_alert.dart';
+import '../../providers/notification_provider.dart';
+import '../../providers/settings_provider.dart';
+
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -29,6 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _centered = false;
   String? _selectedUid;
   LocationPoint? _selectedPoint;
+  String? _notifiedSosKey;
 
   @override
   void initState() {
@@ -84,6 +89,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final locationError = ref.watch(locationControllerProvider);
     final hasError = locationError.hasError || locationsAsync.hasError;
     final selectedGroupId = ref.watch(selectedGroupIdProvider);
+
+    ref.listen(myGroupsStreamProvider, (previous, next) {
+      final nextGroups = next.value ?? const <GroupModel>[];
+      if (nextGroups.isEmpty) {
+        _notifiedSosKey = null;
+        return;
+      }
+      final id = ref.read(selectedGroupIdProvider);
+      final active = nextGroups.firstWhere(
+        (g) => g.id == id,
+        orElse: () => nextGroups.first,
+      );
+      _notifySosIfNeeded(active, selfUid);
+    });
 
     GroupModel? activeGroup;
     if (hasGroup) {
@@ -192,7 +211,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Align(
               alignment: Alignment.topCenter,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 84, 12, 12),
+                padding: EdgeInsets.fromLTRB(
+                  12,
+                  activeGroup?.sos != null ? 148 : 84,
+                  12,
+                  12,
+                ),
                 child: Material(
                   color: Colors.red.shade50,
                   borderRadius: BorderRadius.circular(12),
@@ -207,6 +231,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                 ),
+              ),
+            ),
+
+          if (activeGroup?.sos != null)
+            Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 84, 12, 12),
+                child: _sosBanner(activeGroup!, selfUid),
               ),
             ),
 
@@ -262,6 +295,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: const Icon(Icons.my_location),
             ),
           ),
+
+          if (activeGroup != null)
+            Positioned(
+              right: 12,
+              bottom: 76,
+              child: FloatingActionButton(
+                heroTag: 'sos',
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                tooltip: 'Send SOS',
+                onPressed: () => _confirmSos(activeGroup!),
+                child: const Icon(Icons.sos),
+              ),
+            ),
         ],
       ),
     );
@@ -277,6 +324,163 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         CameraPosition(
           target: LatLng(myPoint.latitude, myPoint.longitude),
           zoom: 15,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmSos(GroupModel group) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Send SOS?'),
+        content: Text(
+          'This will alert everyone in "${group.name}" that you need help.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Send SOS'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _sendSos(group);
+  }
+
+  Future<void> _sendSos(GroupModel group) async {
+    LocationPoint? point;
+    try {
+      point = await ref.read(locationServicesProvider).currentPoint();
+    } catch (_) {
+      point = ref.read(myLocationProvider).value;
+    }
+    if (point == null) {
+      await _showSosError(
+        'Could not get your location. Please turn on location and try again.',
+      );
+      return;
+    }
+    try {
+      await ref.read(groupRepositoryProvider).sendSos(
+            groupId: group.id,
+            latitude: point.latitude,
+            longitude: point.longitude,
+          );
+    } on Failure catch (e) {
+      if (!mounted) return;
+      await _showSosError(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      await _showSosError('Could not send SOS. Please try again.');
+    }
+  }
+
+  Future<void> _resolveSos(GroupModel group) async {
+    try {
+      await ref.read(groupRepositoryProvider).resolveSos(group.id);
+    } on Failure catch (e) {
+      if (!mounted) return;
+      await _showSosError(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      await _showSosError('Could not clear the alert. Please try again.');
+    }
+  }
+
+  void _focusOnSos(SosAlert sos) {
+    final controller = _mapController;
+    if (controller == null) return;
+    controller.moveCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(sos.latitude, sos.longitude),
+          zoom: 15,
+        ),
+      ),
+    );
+  }
+
+  void _notifySosIfNeeded(GroupModel? group, String? selfUid) {
+    final sos = group?.sos;
+    if (group == null || sos == null) {
+      _notifiedSosKey = null;
+      return;
+    }
+    if (sos.uid == selfUid) return;
+    final key =
+        '${group.id}:${sos.uid}:${sos.createdAt.millisecondsSinceEpoch}';
+    if (_notifiedSosKey == key) return;
+    if (!ref.read(settingsProvider).notificationsEnabled) return;
+    _notifiedSosKey = key;
+    ref.read(notificationServiceProvider).showSos(
+          senderName: sos.name,
+          groupName: group.name,
+        );
+  }
+
+  Future<void> _showSosError(String message) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('SOS failed'),
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.error),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sosBanner(GroupModel group, String? selfUid) {
+    final sos = group.sos!;
+    final isMine = sos.uid == selfUid;
+    return Material(
+      color: AppColors.error,
+      borderRadius: BorderRadius.circular(12),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            const Icon(Icons.emergency, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isMine
+                    ? 'Your SOS is active. Group members have been alerted.'
+                    : '${sos.name} needs help!',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            if (!isMine)
+              TextButton(
+                onPressed: () => _focusOnSos(sos),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                child: const Text('View'),
+              ),
+            TextButton(
+              onPressed: () => _resolveSos(group),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              child: Text(isMine ? 'Cancel' : 'Resolve'),
+            ),
+          ],
         ),
       ),
     );

@@ -164,6 +164,51 @@ class GroupRepository {
       throw const NetworkFailure('Failed to join group. Please check your internet connection and try again.');
     }
     }
+
+    Future<void> sendSos({
+      required String groupId,
+      required double latitude,
+      required double longitude,
+    }) async {
+      try {
+        final uid = _authService.currentUserId;
+        if (uid == null) {
+          throw const AuthFailure('You need to be signed in to send an SOS.');
+        }
+      await _firestore.updateDoc('groups/$groupId',{
+        'sos' : {
+          'uid': uid,
+          'name': _authService.currentUserName ?? 'A member',
+          'latitude': latitude,
+          'longitude' : longitude,
+          'createdAt' : DateTime.now().toIso8601String(),
+        },
+      });
+      } on FirebaseException catch (e) {
+        throw FirestoreFailure(_firestoreMessage(e));
+      } on Failure {
+        rethrow;
+      } catch (_) {
+        throw const NetworkFailure('Could not send SOS. Please check your internet connection and try again.',
+        );
+      }
+    }
+
+    Future<void> resolveSos(String groupId) async {
+      try {
+        await _firestore.updateDoc('groups/$groupId', {
+          'sos': FieldValue.delete(),
+        });
+      } on FirebaseException catch (e) {
+        throw FirestoreFailure(_firestoreMessage(e));
+      } on Failure {
+        rethrow;
+      } catch (_) {
+        throw const NetworkFailure('Could not clear the alert. Please check your internet connection and try again.',
+        );
+      }
+    }
+
     Stream<List<GroupModel>> groupsContaining(String uid) {
       return _firestore
           .collection('groups')
