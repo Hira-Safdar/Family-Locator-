@@ -184,6 +184,15 @@ class GroupRepository {
           'createdAt' : DateTime.now().toIso8601String(),
         },
       });
+      await _firestore.collection('alerts').add({
+        'groupId': groupId,
+        'uid': uid,
+        'name': _authService.currentUserName ?? 'A member',
+        'latitude': latitude,
+        'longitude': longitude,
+        'createdAt': DateTime.now().toIso8601String(),
+        'resolvedAt': null,
+      });
       } on FirebaseException catch (e) {
         throw FirestoreFailure(_firestoreMessage(e));
       } on Failure {
@@ -199,6 +208,28 @@ class GroupRepository {
         await _firestore.updateDoc('groups/$groupId', {
           'sos': FieldValue.delete(),
         });
+        final snap = await _firestore
+            .collection('alerts')
+            .where('groupId', isEqualTo: groupId)
+            .get();
+        final open = snap.docs
+            .where((doc) => doc.data()['resolvedAt'] == null)
+            .toList();
+        if (open.isNotEmpty) {
+          open.sort((a, b) {
+            final at = DateTime.tryParse(
+              a.data()['createdAt'] as String? ?? '',
+            );
+            final bt = DateTime.tryParse(
+              b.data()['createdAt'] as String? ?? '',
+            );
+            return (bt ?? DateTime.fromMillisecondsSinceEpoch(0))
+                .compareTo(at ?? DateTime.fromMillisecondsSinceEpoch(0));
+          });
+          await open.first.reference.update({
+            'resolvedAt': DateTime.now().toIso8601String(),
+          });
+        }
       } on FirebaseException catch (e) {
         throw FirestoreFailure(_firestoreMessage(e));
       } on Failure {

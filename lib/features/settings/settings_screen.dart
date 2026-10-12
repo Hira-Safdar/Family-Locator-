@@ -168,6 +168,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Alerts History'),
+            subtitle: const Text('Past SOS alerts'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/alerts'),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
             leading: const Icon(Icons.delete_outline, color: AppColors.error),
             title: const Text(
               'Delete Profile',

@@ -8,6 +8,7 @@ import '../../features/auth/signup_screen.dart';
 import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
+import '../../features/settings/alerts_screen.dart';
 import '../../features/settings/privacy_controls_screen.dart';
 import '../../features/settings/view_profile_screen.dart';
 import '../../features/shell/home_shell.dart';
@@ -66,6 +67,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/privacy',
         builder: (context, state) => const PrivacyControlsScreen(),
+      ),
+      GoRoute(
+        path: '/alerts',
+        builder: (context, state) => const AlertsScreen(),
       ),
     ],
   );
