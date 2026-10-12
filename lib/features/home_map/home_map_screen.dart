@@ -314,12 +314,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          if (activeGroup != null)
+          if (activeGroup != null && activeGroup.memberIds.length > 1)
             Positioned(
               right: 12,
               bottom: 76,
               child: FloatingActionButton(
                 heroTag: 'sos',
+                mini: true,
                 backgroundColor: AppColors.error,
                 foregroundColor: Colors.white,
                 tooltip: 'Send SOS',
