@@ -11,6 +11,7 @@ import '../../core/errors/failure.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../shared_widgets/profile_avatar.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -129,6 +130,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          _profileHeader(context),
           _sectionHeader(context, 'Manage Permissions'),
           ListTile(
             leading: const Icon(Icons.location_on_outlined),
@@ -155,13 +157,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             subtitle: Text(_intervalLabel(settings.refreshSeconds)),
             trailing: const Icon(Icons.chevron_right),
             onTap: _showRefreshSheet,
-          ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('Update Profile'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/edit-profile'),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
@@ -225,6 +220,69 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               color: AppColors.textLight,
               letterSpacing: 0.5,
             ),
+      ),
+    );
+  }
+
+  Widget _profileHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final uid = ref.watch(authStateProvider).value;
+    final profile = uid == null
+        ? null
+        : ref.watch(userProfileProvider(uid)).value;
+    final name = profile?.name ?? 'Your profile';
+    final email = profile?.email ?? '';
+
+    return InkWell(
+      onTap: () => context.push('/view-profile'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ProfileAvatar(
+              name: name,
+              photoUrl: profile?.photoUrl,
+              radius: 32,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  if (email.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textLight),
+          ],
+        ),
       ),
     );
   }

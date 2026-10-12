@@ -14,6 +14,7 @@ import '../../providers/location_provider.dart';
 import '../../providers/member_locations_provider.dart';
 import '../../shared_widgets/loading_indicator.dart';
 import '../../shared_widgets/offline_view.dart';
+import '../../shared_widgets/profile_avatar.dart';
 import '../../data/models/sos_alert.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -125,6 +126,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             BitmapDescriptor.hueGreen,
           ),
           zIndexInt: 1,
+          onTap: () => setState(() {
+            _selectedUid = selfUid;
+            _selectedPoint = myPoint;
+          }),
         ),
       );
     }
@@ -278,7 +283,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               right: 68,
               bottom: 16,
               child: _selectedUid != null && _selectedPoint != null
-                  ? _memberBox(groups, _selectedUid!, _selectedPoint!, myPoint)
+                  ? (_selectedUid == selfUid
+                      ? _youBox(
+                          activeGroup,
+                          groups,
+                          _selectedUid!,
+                          _selectedPoint!,
+                        )
+                      : _memberBox(
+                          activeGroup,
+                          groups,
+                          _selectedUid!,
+                          _selectedPoint!,
+                          myPoint,
+                        ))
                   : _groupBox(groups, activeGroup, myPoint),
             ),
 
@@ -600,13 +618,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _memberBox(
+    GroupModel active,
     List<GroupModel> groups,
     String uid,
     LocationPoint point,
     LocationPoint? myPoint,
   ) {
     final shortId = uid.substring(uid.length - 4).toUpperCase();
-    final name = ref.watch(userNameProvider(uid)).value ?? 'Member $shortId';
+    final profile = ref.watch(userProfileProvider(uid)).value;
+    final name = profile?.name ?? 'Member $shortId';
+    final isOwner = active.ownerId == uid;
     final memberGroups =
         ref.watch(memberGroupsProvider(uid)).value ?? const <GroupModel>[];
 
@@ -622,17 +643,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
+                  ProfileAvatar(
+                    name: name,
+                    photoUrl: profile?.photoUrl,
                     radius: 18,
-                    child: Icon(Icons.person, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        if (isOwner) ...[
+                          const SizedBox(width: 8),
+                          _ownerBadge(),
+                        ],
+                      ],
                     ),
                   ),
                   IconButton(
@@ -725,6 +757,111 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _youBox(
+    GroupModel active,
+    List<GroupModel> groups,
+    String uid,
+    LocationPoint point,
+  ) {
+    final profile = ref.watch(userProfileProvider(uid)).value;
+    final name = profile?.name ?? 'You';
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ProfileAvatar(
+                name: name,
+                photoUrl: profile?.photoUrl,
+                radius: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'You',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Next group',
+                icon: const Icon(Icons.chevron_right, size: 30),
+                color: AppColors.primary,
+                onPressed: () => _nextGroup(groups),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          _infoRow(
+            Icons.schedule,
+            'Last seen',
+            DateFormatter.lastSeen(point.timestamp),
+          ),
+          if (point.accuracy != null)
+            _infoRow(
+              Icons.gps_fixed,
+              'Accuracy',
+              '${point.accuracy!.round()} m',
+            ),
+          if (point.batteryLevel != null)
+            _infoRow(
+              Icons.battery_std,
+              'Battery',
+              '${point.batteryLevel}%',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ownerBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Text(
+        'Owner',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primary,
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/services/firebase_auth_services.dart';
 import '../data/services/firestore_services.dart';
@@ -20,6 +21,11 @@ final userNameProvider = FutureProvider.family<String?, String>((ref, uid) {
 final userDocProvider =
     FutureProvider.family<Map<String, dynamic>?, String>((ref, uid) {
   return ref.watch(authRepositoryProvider).userDoc(uid);
+});
+
+final userProfileProvider =
+    FutureProvider.family<UserProfile?, String>((ref, uid) {
+  return ref.watch(authRepositoryProvider).userProfile(uid);
 });
 
 class AuthController extends AsyncNotifier<void> {

@@ -63,7 +63,7 @@ class GroupsScreen extends ConsumerWidget {
               error: (e, st) => ErrorView(
                 message: e is Failure
                     ? e.message
-                    : 'Something went wrong loading your groups.',
+                    : 'Something went wrong loading your groups.\n\nDEBUG: $e',
                 onRetry: () => ref.invalidate(myGroupsStreamProvider),
               ),
               data: (list) => list.isEmpty

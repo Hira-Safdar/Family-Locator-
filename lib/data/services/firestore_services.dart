@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class FirestoreServices{
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  Future<void> setDoc(String path, Map<String, dynamic> data){
+  Future<void> setDoc(String path, Map<String, dynamic> data, {bool merge = false}) {
+    if (merge) {
+      return _db.doc(path).set(data, SetOptions(merge: true));
+    }
     return _db.doc(path).set(data);
   }
 

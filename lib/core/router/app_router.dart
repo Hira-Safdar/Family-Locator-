@@ -8,7 +8,7 @@ import '../../features/auth/signup_screen.dart';
 import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
-import '../../features/settings/edit_profile_screen.dart';
+import '../../features/settings/view_profile_screen.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../providers/auth_provider.dart';
@@ -59,8 +59,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const JoinGroupScreen(),
       ),
       GoRoute(
-        path: '/edit-profile',
-        builder: (context, state) => const EditProfileScreen(),
+        path: '/view-profile',
+        builder: (context, state) => const ViewProfileScreen(),
       ),
     ],
   );

@@ -136,6 +136,17 @@ class AuthRepository {
     return _firestore.getDoc('users/$uid');
   }
 
+  Future<UserProfile?> userProfile(String uid) async {
+    final data = await _firestore.getDoc('users/$uid');
+    if (data == null) return null;
+    return UserProfile(
+      uid: uid,
+      name: (data['name'] as String?) ?? 'Member',
+      email: (data['email'] as String?) ?? '',
+      photoUrl: data['photoUrl'] as String?,
+    );
+  }
+
   AuthFailure _mapAuthError(fb.FirebaseAuthException e) {
     switch (e.code) {
       case 'wrong-password':
