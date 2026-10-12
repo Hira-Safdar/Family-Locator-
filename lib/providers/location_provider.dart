@@ -45,6 +45,13 @@ class LocationController extends AsyncNotifier<void> {
 
   Future<void> start() async {
     state = const AsyncLoading();
+    final repo = ref.read(locationRepositoryProvider);
+    final paused = await repo.isSharingPaused();
+    if (paused) {
+      ref.read(isSharingProvider.notifier).off();
+      state = const AsyncData(null);
+      return;
+    }
     final services = ref.read(locationServicesProvider);
     final allowed = await services.ensurePermission();
     if(!allowed){
@@ -61,15 +68,29 @@ class LocationController extends AsyncNotifier<void> {
     state = const AsyncData(null);
   }
 
+  Future<void> resume() async {
+    await ref.read(locationRepositoryProvider).setSharingPaused(false);
+    await start();
+  }
+
   Future<void> restart() async {
     if (!ref.read(isSharingProvider)) return;
     await start();
   }
 
   Future<void> stop() async {
-    ref.read(locationServicesProvider).stopTracking();
-    ref.read(isSharingProvider.notifier).off();
-    state = const AsyncData(null);
+    try {
+      await ref.read(locationRepositoryProvider).setSharingPaused(true);
+    } finally {
+      ref.read(locationServicesProvider).stopTracking();
+      ref.read(isSharingProvider.notifier).off();
+      state = const AsyncData(null);
+    }
+  }
+
+  Future<void> clearHistory() async {
+    await ref.read(locationRepositoryProvider).clearHistory();
+    ref.invalidate(myLocationProvider);
   }
 
   void _handlePoint(LocationPoint point) {

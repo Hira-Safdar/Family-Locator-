@@ -149,6 +149,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 ref.read(settingsProvider.notifier).setNotifications(v),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.shield_outlined),
+            title: const Text('Privacy Controls'),
+            subtitle: const Text('Pause sharing or clear history'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/privacy'),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
 
           _sectionHeader(context, 'General'),
           ListTile(

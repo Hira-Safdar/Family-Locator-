@@ -8,6 +8,7 @@ import '../../features/auth/signup_screen.dart';
 import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
+import '../../features/settings/privacy_controls_screen.dart';
 import '../../features/settings/view_profile_screen.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/splash/splash_screen.dart';
@@ -61,6 +62,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/view-profile',
         builder: (context, state) => const ViewProfileScreen(),
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (context, state) => const PrivacyControlsScreen(),
       ),
     ],
   );
