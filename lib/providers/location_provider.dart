@@ -9,23 +9,18 @@ import '../data/services/location_service.dart';
 import 'auth_provider.dart';
 import 'settings_provider.dart';
 
-
-final locationServicesProvider = Provider<LocationServices>((ref){
+final locationServicesProvider = Provider<LocationServices>((ref) {
   return LocationServices();
 });
 
-final locationRepositoryProvider = Provider<LocationRepository>((ref){
-  return LocationRepository(
-    FirestoreServices(),
-    FirebaseAuthServices(),
-  );
+final locationRepositoryProvider = Provider<LocationRepository>((ref) {
+  return LocationRepository(FirestoreServices(), FirebaseAuthServices());
 });
 
-final myLocationProvider = StreamProvider<LocationPoint?>((ref){
+final myLocationProvider = StreamProvider<LocationPoint?>((ref) {
   final uid = ref.watch(authStateProvider).value;
   if (uid == null) return Stream.empty();
   return ref.watch(locationRepositoryProvider).latestPoint(uid);
-
 });
 
 class IsSharing extends Notifier<bool> {
@@ -40,7 +35,6 @@ final isSharingProvider = NotifierProvider<IsSharing, bool>(IsSharing.new);
 
 class LocationController extends AsyncNotifier<void> {
   @override
-
   Future<void> build() async {}
 
   Future<void> start() async {
@@ -54,16 +48,16 @@ class LocationController extends AsyncNotifier<void> {
     }
     final services = ref.read(locationServicesProvider);
     final allowed = await services.ensurePermission();
-    if(!allowed){
+    if (!allowed) {
       state = AsyncError(
         LocationPermissionFailure('Location Permission not granted.'),
         StackTrace.current,
       );
       return;
     }
-    services.stopTracking();
     final seconds = ref.read(settingsProvider).refreshSeconds;
-    services.startTracking(_handlePoint, seconds: seconds);
+    await services.ensureNotificationPermission();
+    await services.startTracking(_handlePoint, seconds: seconds);
     ref.read(isSharingProvider.notifier).on();
     state = const AsyncData(null);
   }
@@ -82,7 +76,7 @@ class LocationController extends AsyncNotifier<void> {
     try {
       await ref.read(locationRepositoryProvider).setSharingPaused(true);
     } finally {
-      ref.read(locationServicesProvider).stopTracking();
+      await ref.read(locationServicesProvider).stopTracking();
       ref.read(isSharingProvider.notifier).off();
       state = const AsyncData(null);
     }
@@ -94,12 +88,9 @@ class LocationController extends AsyncNotifier<void> {
   }
 
   void _handlePoint(LocationPoint point) {
-    ref
-        .read(locationRepositoryProvider)
-        .saveLatest(point)
-        .catchError((_) {});
+    ref.read(locationRepositoryProvider).saveLatest(point).catchError((_) {});
   }
 }
 
 final locationControllerProvider =
-AsyncNotifierProvider<LocationController, void>(LocationController.new);
+    AsyncNotifierProvider<LocationController, void>(LocationController.new);
