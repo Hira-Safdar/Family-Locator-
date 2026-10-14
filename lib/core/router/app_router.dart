@@ -9,6 +9,7 @@ import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
 import '../../features/settings/alerts_screen.dart';
+import '../../features/settings/members_screen.dart';
 import '../../features/settings/privacy_controls_screen.dart';
 import '../../features/settings/view_profile_screen.dart';
 import '../../features/shell/home_shell.dart';
@@ -43,7 +44,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) => const SignupScreen(),
+      ),
       GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
       GoRoute(
         path: '/choose-group',
@@ -52,8 +56,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/create-group',
         builder: (context, state) => CreateGroupScreen(
-          category: state.uri.queryParameters['category'] ??
-              GroupCategories.custom,
+          category:
+              state.uri.queryParameters['category'] ?? GroupCategories.custom,
         ),
       ),
       GoRoute(
@@ -71,6 +75,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/alerts',
         builder: (context, state) => const AlertsScreen(),
+      ),
+      GoRoute(
+        path: '/members',
+        builder: (context, state) =>
+            MembersScreen(groupId: state.uri.queryParameters['groupId'] ?? ''),
       ),
     ],
   );

@@ -99,7 +99,9 @@ class GroupRepository {
     required String category,
   }) async {
     try {
-      final data = await _firestore.getDoc('groups/${uniqueId(name: name, category: category)}');
+      final data = await _firestore.getDoc(
+        'groups/${uniqueId(name: name, category: category)}',
+      );
       return data != null;
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
@@ -128,60 +130,68 @@ class GroupRepository {
 
   Future<GroupModel> joinGroup({required String inviteCode}) async {
     try {
-    final uid = _authService.currentUserId;
-    if (uid == null) {
-      throw const AuthFailure('You need to be signed in to join a group.');
-    }
-    final snap = await _firestore
-        .collection('groups')
-        .where('inviteCode', isEqualTo: inviteCode)
-        .limit(1)
-        .get();
-        if (snap.docs.isEmpty) {
-          throw const FirestoreFailure('Invalid invite code. Please check the code and try again.');
-        }
-        final doc = snap.docs.first;
-        final group = GroupModel.fromJson(doc.data());
-        if (group.ownerId == uid) {
-          throw const GroupAlreadyMemberFailure('You are the owner of this group. You are already a part of it.');
-        }
-        if (group.containsMember(uid)) {
-          throw const GroupAlreadyMemberFailure('You are already a member of this group.');
-        }
-        final newMember= <String>[...group.memberIds, uid];
-        await _firestore.runTransaction((ts) async {
-          final ref = _firestore.collection('groups').doc(group.id);
-          ts.update(ref,{
-            'memberIds': FieldValue.arrayUnion([uid]),
-            });
-          });
-          return group.copyWith(memberIds: newMember);
+      final uid = _authService.currentUserId;
+      if (uid == null) {
+        throw const AuthFailure('You need to be signed in to join a group.');
+      }
+      final snap = await _firestore
+          .collection('groups')
+          .where('inviteCode', isEqualTo: inviteCode)
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) {
+        throw const FirestoreFailure(
+          'Invalid invite code. Please check the code and try again.',
+        );
+      }
+      final doc = snap.docs.first;
+      final group = GroupModel.fromJson(doc.data());
+      if (group.ownerId == uid) {
+        throw const GroupAlreadyMemberFailure(
+          'You are the owner of this group. You are already a part of it.',
+        );
+      }
+      if (group.containsMember(uid)) {
+        throw const GroupAlreadyMemberFailure(
+          'You are already a member of this group.',
+        );
+      }
+      final newMember = <String>[...group.memberIds, uid];
+      await _firestore.runTransaction((ts) async {
+        final ref = _firestore.collection('groups').doc(group.id);
+        ts.update(ref, {
+          'memberIds': FieldValue.arrayUnion([uid]),
+        });
+      });
+      return group.copyWith(memberIds: newMember);
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
     } on Failure {
       rethrow;
     } catch (_) {
-      throw const NetworkFailure('Failed to join group. Please check your internet connection and try again.');
+      throw const NetworkFailure(
+        'Failed to join group. Please check your internet connection and try again.',
+      );
     }
-    }
+  }
 
-    Future<void> sendSos({
-      required String groupId,
-      required double latitude,
-      required double longitude,
-    }) async {
-      try {
-        final uid = _authService.currentUserId;
-        if (uid == null) {
-          throw const AuthFailure('You need to be signed in to send an SOS.');
-        }
-      await _firestore.updateDoc('groups/$groupId',{
-        'sos' : {
+  Future<void> sendSos({
+    required String groupId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final uid = _authService.currentUserId;
+      if (uid == null) {
+        throw const AuthFailure('You need to be signed in to send an SOS.');
+      }
+      await _firestore.updateDoc('groups/$groupId', {
+        'sos': {
           'uid': uid,
           'name': _authService.currentUserName ?? 'A member',
           'latitude': latitude,
-          'longitude' : longitude,
-          'createdAt' : DateTime.now().toIso8601String(),
+          'longitude': longitude,
+          'createdAt': DateTime.now().toIso8601String(),
         },
       });
       await _firestore.collection('alerts').add({
@@ -193,82 +203,119 @@ class GroupRepository {
         'createdAt': DateTime.now().toIso8601String(),
         'resolvedAt': null,
       });
-      } on FirebaseException catch (e) {
-        throw FirestoreFailure(_firestoreMessage(e));
-      } on Failure {
-        rethrow;
-      } catch (_) {
-        throw const NetworkFailure('Could not send SOS. Please check your internet connection and try again.',
-        );
-      }
-    }
-
-    Future<void> resolveSos(String groupId) async {
-      try {
-        await _firestore.updateDoc('groups/$groupId', {
-          'sos': FieldValue.delete(),
-        });
-        final snap = await _firestore
-            .collection('alerts')
-            .where('groupId', isEqualTo: groupId)
-            .get();
-        final open = snap.docs
-            .where((doc) => doc.data()['resolvedAt'] == null)
-            .toList();
-        if (open.isNotEmpty) {
-          open.sort((a, b) {
-            final at = DateTime.tryParse(
-              a.data()['createdAt'] as String? ?? '',
-            );
-            final bt = DateTime.tryParse(
-              b.data()['createdAt'] as String? ?? '',
-            );
-            return (bt ?? DateTime.fromMillisecondsSinceEpoch(0))
-                .compareTo(at ?? DateTime.fromMillisecondsSinceEpoch(0));
-          });
-          await open.first.reference.update({
-            'resolvedAt': DateTime.now().toIso8601String(),
-          });
-        }
-      } on FirebaseException catch (e) {
-        throw FirestoreFailure(_firestoreMessage(e));
-      } on Failure {
-        rethrow;
-      } catch (_) {
-        throw const NetworkFailure('Could not clear the alert. Please check your internet connection and try again.',
-        );
-      }
-    }
-
-    Stream<List<GroupModel>> groupsContaining(String uid) {
-      return _firestore
-          .collection('groups')
-          .where('memberIds', arrayContains: uid)
-          .snapshots()
-          .map((q) => q.docs.map((doc) => GroupModel.fromJson(doc.data())).toList());
-    }
-
-    Stream<List<GroupModel>> getUserGroups() {
-      final uid = _authService.currentUserId;
-      if (uid == null) return Stream<List<GroupModel>>.value(const []);
-      return groupsContaining(uid);
-    }
-
-    Stream<GroupModel> groupStream(String groupId) {
-      if (groupId.isEmpty) return Stream<GroupModel>.error(const GroupNotFoundFailure('This group no longer exists.'));
-      return _firestore
-          .docStream('groups/$groupId')
-          .map((snap) => GroupModel.fromJson(snap.data() ?? {}));
-    }
-
-    String _firestoreMessage(FirebaseException e) {
-      switch (e.code) {
-        case 'permission-denied':
-          return 'You do not have permission to perform this action.';
-        case 'not-found':
-          return 'The requested document was not found.';
-        default:
-          return 'An unexpected error occurred. Please try again.';
-      }
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not send SOS. Please check your internet connection and try again.',
+      );
     }
   }
+
+  Future<void> resolveSos(String groupId) async {
+    try {
+      await _firestore.updateDoc('groups/$groupId', {
+        'sos': FieldValue.delete(),
+      });
+      final snap = await _firestore
+          .collection('alerts')
+          .where('groupId', isEqualTo: groupId)
+          .get();
+      final open = snap.docs
+          .where((doc) => doc.data()['resolvedAt'] == null)
+          .toList();
+      if (open.isNotEmpty) {
+        open.sort((a, b) {
+          final at = DateTime.tryParse(a.data()['createdAt'] as String? ?? '');
+          final bt = DateTime.tryParse(b.data()['createdAt'] as String? ?? '');
+          return (bt ?? DateTime.fromMillisecondsSinceEpoch(0)).compareTo(
+            at ?? DateTime.fromMillisecondsSinceEpoch(0),
+          );
+        });
+        await open.first.reference.update({
+          'resolvedAt': DateTime.now().toIso8601String(),
+        });
+      }
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not clear the alert. Please check your internet connection and try again.',
+      );
+    }
+  }
+
+  Future<void> removeMember({
+    required String groupId,
+    required String uid,
+  }) async {
+    try {
+      final me = _authService.currentUserId;
+      if (me == null) {
+        throw const AuthFailure('You need to be signed in.');
+      }
+      final data = await _firestore.getDoc('groups/$groupId');
+      if (data == null) {
+        throw const FirestoreFailure('This group no longer exists.');
+      }
+      if (data['ownerId'] != me) {
+        throw const FirestoreFailure(
+          'Only the group owner can remove members.',
+        );
+      }
+      await _firestore.updateDoc('groups/$groupId', {
+        'memberIds': FieldValue.arrayRemove([uid]),
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not remove member. Please check your internet connection and try again.',
+      );
+    }
+  }
+
+  Stream<List<GroupModel>> groupsContaining(String uid) {
+    return _firestore
+        .collection('groups')
+        .where('memberIds', arrayContains: uid)
+        .snapshots()
+        .map(
+          (q) => q.docs.map((doc) => GroupModel.fromJson(doc.data())).toList(),
+        );
+  }
+
+  Stream<List<GroupModel>> getUserGroups() {
+    final uid = _authService.currentUserId;
+    if (uid == null) return Stream<List<GroupModel>>.value(const []);
+    return groupsContaining(uid);
+  }
+
+  Stream<GroupModel> groupStream(String groupId) {
+    if (groupId.isEmpty) {
+      return Stream<GroupModel>.error(
+        const GroupNotFoundFailure('This group no longer exists.'),
+      );
+    }
+    return _firestore
+        .docStream('groups/$groupId')
+        .map((snap) => GroupModel.fromJson(snap.data() ?? {}));
+  }
+
+  String _firestoreMessage(FirebaseException e) {
+    switch (e.code) {
+      case 'permission-denied':
+        return 'You do not have permission to perform this action.';
+      case 'not-found':
+        return 'The requested document was not found.';
+      default:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  }
+}

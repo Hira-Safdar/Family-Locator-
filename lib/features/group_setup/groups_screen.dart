@@ -71,8 +71,7 @@ class GroupsScreen extends ConsumerWidget {
                   : ListView.builder(
                       padding: const EdgeInsets.only(top: 8, bottom: 24),
                       itemCount: list.length,
-                      itemBuilder: (context, i) =>
-                          _GroupCard(group: list[i]),
+                      itemBuilder: (context, i) => _GroupCard(group: list[i]),
                     ),
             ),
           ),
@@ -107,9 +106,9 @@ class _EmptyState extends StatelessWidget {
             Text(
               'Create a new group or join an existing one using an invite code.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textLight,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
             ),
           ],
         ),
@@ -136,120 +135,117 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final members = group.memberIds.length;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: AppColors.background,
-            child: Text(
-              group.name.isEmpty
-                  ? '?'
-                  : group.name[0].toUpperCase(),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
+    return GestureDetector(
+      onTap: () => context.push('/members?groupId=${group.id}'),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.background,
+              child: Text(
+                group.name.isEmpty ? '?' : group.name[0].toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        group.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          group.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          group.category,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.group_outlined,
+                        size: 15,
+                        color: AppColors.textLight,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$members member${members == 1 ? '' : 's'}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () => _copyCode(context),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.background,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        group.category,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                        group.inviteCode,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          letterSpacing: 3,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.group_outlined,
-                      size: 15,
-                      color: AppColors.textLight,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$members member${members == 1 ? '' : 's'}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                InkWell(
-                  onTap: () => _copyCode(context),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      group.inviteCode,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall
-                          ?.copyWith(
-                            letterSpacing: 3,
-                            color: AppColors.primary,
-                          ),
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Show QR',
-            icon: const Icon(Icons.qr_code_2),
-            color: AppColors.textLight,
-            onPressed: () => _showQr(context),
-          ),
-        ],
+            IconButton(
+              tooltip: 'Show QR',
+              icon: const Icon(Icons.qr_code_2),
+              color: AppColors.textLight,
+              onPressed: () => _showQr(context),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -283,10 +279,7 @@ class _GroupCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.black12,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.black12, width: 2),
               ),
               child: CustomPaint(
                 painter: QrPainter.withQr(qr: qrCode, gapless: true),
@@ -308,9 +301,9 @@ class _GroupCard extends StatelessWidget {
               child: Text(
                 group.inviteCode,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.primary,
-                      letterSpacing: 4,
-                    ),
+                  color: AppColors.primary,
+                  letterSpacing: 4,
+                ),
               ),
             ),
           ],
