@@ -11,21 +11,7 @@ class LocationRepository {
   final FirestoreServices _firestore;
   final FirebaseAuthServices _authService;
 
-
-  Future<void> saveLatest(LocationPoint point) async {
-    final uid = _authService.currentUserId;
-    if (uid == null) {
-      throw const AuthFailure('You need to be signed in to share location.');
-    }
-    try{
-      await _firestore.setDoc('location_points/$uid', point.toJson());
-    } on FirebaseException catch (e) {
-      throw FirestoreFailure(_firestoreMessage(e));
-    } catch(_) {
-      throw const NetworkFailure('Failed to save location.Please check your internet connection.');
-    }
-  }
-    Future<void> setSharingPaused(bool paused) async {
+  Future<void> setSharingPaused(bool paused) async {
     final uid = _authService.currentUserId;
     if (uid == null) {
       throw const AuthFailure('You need to be signed in to change sharing.');

@@ -74,7 +74,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           CameraUpdate.newCameraPosition(
             CameraPosition(
               target: LatLng(point.latitude, point.longitude),
-              zoom: 15,
+              zoom: AppConfig.defaultMapZoom,
             ),
           ),
         );
@@ -343,7 +343,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(myPoint.latitude, myPoint.longitude),
-          zoom: 15,
+          zoom: AppConfig.defaultMapZoom,
         ),
       ),
     );
@@ -421,7 +421,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(sos.latitude, sos.longitude),
-          zoom: 15,
+          zoom: AppConfig.defaultMapZoom,
         ),
       ),
     );

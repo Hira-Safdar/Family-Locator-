@@ -10,6 +10,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/constants/app_config.dart';
 import '../../firebase_options.dart';
 
 const String locationSharingChannelId = 'location_sharing';
@@ -140,8 +141,10 @@ LocationSettings _settings(int seconds, int minMeters) {
 Future<void> _startTracking() async {
   await _positionSubscription?.cancel();
   final prefs = await SharedPreferences.getInstance();
-  final seconds = prefs.getInt(_intervalKey) ?? 10;
-  final minMeters = prefs.getInt(_minMetersKey) ?? 50;
+  final seconds =
+      prefs.getInt(_intervalKey) ?? AppConfig.locationUpdateInterval.inSeconds;
+  final minMeters =
+      prefs.getInt(_minMetersKey) ?? AppConfig.minDistanceToUpload.round();
 
   _positionSubscription = Geolocator.getPositionStream(
     locationSettings: _settings(seconds, minMeters),
