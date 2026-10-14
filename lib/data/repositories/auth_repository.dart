@@ -47,10 +47,7 @@ class AuthRepository {
     }
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     try {
       await _authService.signIn(email: email, password: password);
     } on fb.FirebaseAuthException catch (e) {
@@ -89,6 +86,38 @@ class AuthRepository {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final uid = _authService.currentUserId;
+    if (uid == null) {
+      throw const AuthFailure('No signed-in account found.');
+    }
+    final email = _authService.currentUserEmail;
+    if (email == null || email.isEmpty) {
+      throw const AuthFailure('This account has no email address.');
+    }
+    try {
+      await _authService.reauthenticate(
+        email: email,
+        password: currentPassword,
+      );
+      await _authService.updatePassword(newPassword);
+    } on fb.FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        throw const AuthFailure('Your current password is incorrect.');
+      }
+      throw _mapAuthError(e);
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Check your internet connection and try again.',
+      );
+    }
+  }
+
   Future<void> deleteAccount() async {
     final uid = _authService.currentUserId;
     if (uid == null) {
@@ -116,9 +145,7 @@ class AuthRepository {
           });
         }
       } else {
-        await _firestore.updateDoc('groups/${doc.id}', {
-          'memberIds': members,
-        });
+        await _firestore.updateDoc('groups/${doc.id}', {'memberIds': members});
       }
     }
 
@@ -151,7 +178,9 @@ class AuthRepository {
     switch (e.code) {
       case 'wrong-password':
       case 'invalid-credential':
-        return const AuthFailure('Invalid email or password. Please try again.');
+        return const AuthFailure(
+          'Invalid email or password. Please try again.',
+        );
       case 'user-not-found':
         return const AuthFailure(
           'No account found with this email. Please sign up.',

@@ -18,13 +18,17 @@ final userNameProvider = FutureProvider.family<String?, String>((ref, uid) {
   return ref.watch(authRepositoryProvider).userName(uid);
 });
 
-final userDocProvider =
-    FutureProvider.family<Map<String, dynamic>?, String>((ref, uid) {
+final userDocProvider = FutureProvider.family<Map<String, dynamic>?, String>((
+  ref,
+  uid,
+) {
   return ref.watch(authRepositoryProvider).userDoc(uid);
 });
 
-final userProfileProvider =
-    FutureProvider.family<UserProfile?, String>((ref, uid) {
+final userProfileProvider = FutureProvider.family<UserProfile?, String>((
+  ref,
+  uid,
+) {
   return ref.watch(authRepositoryProvider).userProfile(uid);
 });
 
@@ -75,6 +79,25 @@ class AuthController extends AsyncNotifier<void> {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .changePassword(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+
   Future<void> deleteAccount() async {
     state = const AsyncLoading();
     try {
@@ -91,5 +114,6 @@ class AuthController extends AsyncNotifier<void> {
   }
 }
 
-final authControllerProvider =
-    AsyncNotifierProvider<AuthController, void>(AuthController.new);
+final authControllerProvider = AsyncNotifierProvider<AuthController, void>(
+  AuthController.new,
+);

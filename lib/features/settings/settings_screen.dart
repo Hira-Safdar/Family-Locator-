@@ -176,6 +176,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
+            leading: const Icon(Icons.password_outlined),
+            title: const Text('Change Password'),
+            subtitle: const Text('Update your account password'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/change-password'),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
             leading: const Icon(Icons.delete_outline, color: AppColors.error),
             title: const Text(
               'Delete Profile',
@@ -233,9 +241,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.textLight,
-              letterSpacing: 0.5,
-            ),
+          color: AppColors.textLight,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -268,11 +276,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         ),
         child: Row(
           children: [
-            ProfileAvatar(
-              name: name,
-              photoUrl: profile?.photoUrl,
-              radius: 32,
-            ),
+            ProfileAvatar(name: name, photoUrl: profile?.photoUrl, radius: 32),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -350,10 +354,9 @@ class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
             const SizedBox(height: 12),
             Text(
               _error!,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppColors.error),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
             ),
           ],
         ],
@@ -371,10 +374,7 @@ class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
                   width: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text(
-                  'Delete',
-                  style: TextStyle(color: AppColors.error),
-                ),
+              : const Text('Delete', style: TextStyle(color: AppColors.error)),
         ),
       ],
     );

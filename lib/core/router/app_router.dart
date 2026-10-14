@@ -9,6 +9,7 @@ import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
 import '../../features/settings/alerts_screen.dart';
+import '../../features/settings/change_password_screen.dart';
 import '../../features/settings/members_screen.dart';
 import '../../features/settings/privacy_controls_screen.dart';
 import '../../features/settings/view_profile_screen.dart';
@@ -80,6 +81,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/members',
         builder: (context, state) =>
             MembersScreen(groupId: state.uri.queryParameters['groupId'] ?? ''),
+      ),
+      GoRoute(
+        path: '/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
     ],
   );
