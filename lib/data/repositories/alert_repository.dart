@@ -6,6 +6,16 @@ class AlertRepository {
 
   final FirestoreServices _firestore;
 
+  Future<void> clearMyAlerts(String uid) async {
+    final snap = await _firestore
+        .collection('alerts')
+        .where('uid', isEqualTo: uid)
+        .get();
+    for (final doc in snap.docs) {
+      await _firestore.deleteDoc('alerts/${doc.id}');
+    }
+  }
+
   Stream<List<AlertRecord>> myAlerts(String uid) {
     return _firestore
         .collection('alerts')

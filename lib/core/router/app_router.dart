@@ -11,6 +11,7 @@ import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/invite_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
+import '../../features/settings/alert_map_screen.dart';
 import '../../features/settings/alerts_screen.dart';
 import '../../features/settings/change_password_screen.dart';
 import '../../features/settings/members_screen.dart';
@@ -99,6 +100,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/alerts',
         builder: (context, state) => const AlertsScreen(),
+      ),
+      GoRoute(
+        path: '/alert-map',
+        builder: (context, state) => AlertMapScreen(
+          latitude: double.tryParse(state.uri.queryParameters['lat'] ?? '') ?? 0,
+          longitude:
+              double.tryParse(state.uri.queryParameters['lng'] ?? '') ?? 0,
+          name: state.uri.queryParameters['name'] ?? '',
+        ),
       ),
       GoRoute(
         path: '/members',
