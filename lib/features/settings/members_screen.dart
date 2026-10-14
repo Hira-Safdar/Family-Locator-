@@ -20,6 +20,84 @@ class MembersScreen extends ConsumerStatefulWidget {
 class _MembersScreenState extends ConsumerState<MembersScreen> {
   String? _busyUid;
   String? _error;
+  bool _actionBusy = false;
+
+  Future<bool?> _confirm({
+    required String title,
+    required String message,
+    required String confirmLabel,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _leave(GroupModel group) async {
+    final confirmed = await _confirm(
+      title: 'Leave group?',
+      message:
+          'You will stop sharing your location with "${group.name}" and leave the group.',
+      confirmLabel: 'Leave',
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      _actionBusy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(groupRepositoryProvider).leaveGroup(group.id);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _actionBusy = false;
+        _error = e is Failure
+            ? e.message
+            : 'Could not leave the group. Please try again.';
+      });
+    }
+  }
+
+  Future<void> _delete(GroupModel group) async {
+    final confirmed = await _confirm(
+      title: 'Delete group?',
+      message:
+          'This permanently deletes "${group.name}" for everyone. This cannot be undone.',
+      confirmLabel: 'Delete',
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      _actionBusy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(groupRepositoryProvider).deleteGroup(group.id);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _actionBusy = false;
+        _error = e is Failure
+            ? e.message
+            : 'Could not delete the group. Please try again.';
+      });
+    }
+  }
 
   Future<void> _remove(GroupModel group, String uid, String name) async {
     final confirmed = await showDialog<bool>(
@@ -118,6 +196,33 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                   onRemove: (memberUid, name) =>
                       _remove(group!, memberUid, name),
                 ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                child: _actionBusy
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: const BorderSide(color: AppColors.error),
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () =>
+                            isOwner ? _delete(group!) : _leave(group!),
+                        icon: Icon(
+                          isOwner ? Icons.delete_outline : Icons.logout,
+                        ),
+                        label: Text(isOwner ? 'Delete group' : 'Leave group'),
+                      ),
+              ),
             ],
           );
         },

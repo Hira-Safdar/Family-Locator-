@@ -281,6 +281,53 @@ class GroupRepository {
     }
   }
 
+  Future<void> leaveGroup(String groupId) async {
+    try {
+      final me = _authService.currentUserId;
+      if (me == null) {
+        throw const AuthFailure('You need to be signed in.');
+      }
+      await _firestore.updateDoc('groups/$groupId', {
+        'memberIds': FieldValue.arrayRemove([me]),
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not leave the group. Please check your internet connection and try again.',
+      );
+    }
+  }
+
+  Future<void> deleteGroup(String groupId) async {
+    try {
+      final me = _authService.currentUserId;
+      if (me == null) {
+        throw const AuthFailure('You need to be signed in.');
+      }
+      final data = await _firestore.getDoc('groups/$groupId');
+      if (data == null) {
+        throw const FirestoreFailure('This group no longer exists.');
+      }
+      if (data['ownerId'] != me) {
+        throw const FirestoreFailure(
+          'Only the group owner can delete this group.',
+        );
+      }
+      await _firestore.deleteDoc('groups/$groupId');
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not delete the group. Please check your internet connection and try again.',
+      );
+    }
+  }
+
   Stream<List<GroupModel>> groupsContaining(String uid) {
     return _firestore
         .collection('groups')
