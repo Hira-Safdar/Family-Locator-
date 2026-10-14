@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battery_plus/battery_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -157,6 +158,10 @@ Future<void> _save(Position position) async {
   if (prefs.getBool(_enabledKey) != true) return;
   final uid = FirebaseAuth.instance.currentUser?.uid;
   if (uid == null) return;
+  int? battery;
+  try {
+    battery = await Battery().batteryLevel;
+  } catch (_) {}
   try {
     await FirebaseFirestore.instance
         .collection('location_points')
@@ -165,7 +170,7 @@ Future<void> _save(Position position) async {
           'latitude': position.latitude,
           'longitude': position.longitude,
           'timestampMs': DateTime.now().millisecondsSinceEpoch,
-          'batteryLevel': null,
+          'batteryLevel': battery,
           'accuracy': position.accuracy,
         });
   } catch (_) {}

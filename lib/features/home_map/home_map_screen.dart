@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_config.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/utils/distance_calculator.dart';
@@ -682,6 +683,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'Last seen',
                 DateFormatter.lastSeen(point.timestamp),
               ),
+              if (_isStale(point))
+                _infoRow(
+                  Icons.warning_amber,
+                  'Status',
+                  'Location may be outdated',
+                  valueColor: AppColors.warning,
+                ),
               if (myPoint != null)
                 _infoRow(
                   Icons.straighten,
@@ -833,6 +841,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             'Last seen',
             DateFormatter.lastSeen(point.timestamp),
           ),
+          if (_isStale(point))
+            _infoRow(
+              Icons.warning_amber,
+              'Status',
+              'Location may be outdated',
+              valueColor: AppColors.warning,
+            ),
           if (point.accuracy != null)
             _infoRow(
               Icons.gps_fixed,
@@ -868,12 +883,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value) {
+  Widget _infoRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.primary),
+          Icon(icon, size: 16, color: valueColor ?? AppColors.primary),
           const SizedBox(width: 8),
           Text(
             label,
@@ -882,16 +902,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
+              color: valueColor ?? AppColors.textDark,
             ),
           ),
         ],
       ),
     );
   }
+
+  bool _isStale(LocationPoint point) =>
+      DateTime.now().difference(point.timestamp) >
+      AppConfig.staleLocationAfter;
 
   BoxDecoration get _cardDecoration => BoxDecoration(
         color: AppColors.surface,

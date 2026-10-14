@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -114,6 +115,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
+  Future<void> _setNotifications(bool enabled) async {
+    ref.read(settingsProvider.notifier).setNotifications(enabled);
+    final uid = ref.read(authStateProvider).value;
+    if (uid == null) return;
+    final repo = ref.read(authRepositoryProvider);
+    final messaging = ref.read(messagingServiceProvider);
+    try {
+      if (enabled) {
+        final token = await messaging.register();
+        if (token != null && token.isNotEmpty) {
+          await repo.saveFcmToken(uid, token);
+        }
+      } else {
+        await repo.clearFcmToken(uid);
+        await messaging.deleteToken();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _showAbout() async {
+    final info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('About'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Family Locator',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Version ${info.version} (build ${info.buildNumber})',
+              style: const TextStyle(color: AppColors.textLight),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Keep your family connected and safe with live location '
+              'sharing and SOS alerts.',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _confirmDelete() async {
     await showDialog<bool>(
       context: context,
@@ -155,8 +212,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             title: const Text('Notifications'),
             subtitle: const Text('Alerts when a member needs help'),
             value: settings.notificationsEnabled,
-            onChanged: (v) =>
-                ref.read(settingsProvider.notifier).setNotifications(v),
+            onChanged: _setNotifications,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
@@ -230,6 +286,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             title: const Text('Feedback'),
             enabled: AppConfig.feedbackEmail.isNotEmpty,
             onTap: () => _launch('mailto:${AppConfig.feedbackEmail}'),
+          ),
+
+          _sectionHeader(context, 'About'),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Help & Support'),
+            enabled: AppConfig.feedbackEmail.isNotEmpty,
+            onTap: () => _launch('mailto:${AppConfig.feedbackEmail}'),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text('Terms of Service'),
+            enabled: AppConfig.termsUrl.isNotEmpty,
+            onTap: () => _launch(AppConfig.termsUrl),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('Privacy Policy'),
+            enabled: AppConfig.privacyPolicyUrl.isNotEmpty,
+            onTap: () => _launch(AppConfig.privacyPolicyUrl),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About'),
+            subtitle: const Text('App version and details'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _showAbout,
           ),
 
           const SizedBox(height: 24),
