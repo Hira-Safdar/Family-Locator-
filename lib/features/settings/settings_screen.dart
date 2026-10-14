@@ -121,6 +121,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     );
   }
 
+  Future<void> _confirmLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => const _LogoutConfirmDialog(),
+    );
+    if (confirmed == true && mounted) {
+      await ref.read(authControllerProvider.notifier).signOut();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
@@ -223,8 +233,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 side: const BorderSide(color: AppColors.error),
                 minimumSize: const Size.fromHeight(48),
               ),
-              onPressed: () =>
-                  ref.read(authControllerProvider.notifier).signOut(),
+              onPressed: _confirmLogout,
               icon: const Icon(Icons.logout),
               label: const Text('Logout'),
             ),
@@ -304,6 +313,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LogoutConfirmDialog extends StatelessWidget {
+  const _LogoutConfirmDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Log out?'),
+      content: const Text(
+        'You will stop sharing your location until you sign in again.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Log out', style: TextStyle(color: AppColors.error)),
+        ),
+      ],
     );
   }
 }

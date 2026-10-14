@@ -22,6 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _passwordError;
   String? _serverError;
   bool _locked = false;
+  bool _obscurePassword = true;
 
   String? _validateEmail(String email) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
@@ -124,11 +125,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextField(
                   controller: _passwordController,
                   enabled: !_locked,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
                     errorText: _passwordError,
                   ),
                   onChanged: (_) {
@@ -137,6 +147,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     }
                   },
                   onSubmitted: (_) => _submit(),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.push('/forgot-password'),
+                    child: const Text('Forgot password?'),
+                  ),
                 ),
                 if (_serverError != null) ...[
                   const SizedBox(height: 16),

@@ -19,6 +19,12 @@ final authStateProvider = StreamProvider<String?>((ref) {
   return repo.authStateChanges();
 });
 
+final emailVerifiedProvider = FutureProvider<bool>((ref) async {
+  final uid = ref.watch(authStateProvider).value;
+  if (uid == null) return true;
+  return ref.watch(authRepositoryProvider).refreshEmailVerified();
+});
+
 final userNameProvider = FutureProvider.family<String?, String>((ref, uid) {
   return ref.watch(authRepositoryProvider).userName(uid);
 });
@@ -114,7 +120,22 @@ class AuthController extends AsyncNotifier<void> {
     }
   }
 
+  Future<void> sendPasswordReset(String email) {
+    return ref.read(authRepositoryProvider).sendPasswordReset(email);
+  }
+
+  Future<void> resendVerification() {
+    return ref.read(authRepositoryProvider).sendEmailVerification();
+  }
+
   Future<void> signOut() async {
+    final uid = ref.read(authStateProvider).value;
+    try {
+      if (uid != null) {
+        await ref.read(authRepositoryProvider).clearFcmToken(uid);
+      }
+      await ref.read(messagingServiceProvider).deleteToken();
+    } catch (_) {}
     await ref.read(authRepositoryProvider).signOut();
   }
 }

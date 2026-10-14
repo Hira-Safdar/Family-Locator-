@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 import '../../core/errors/failure.dart';
@@ -34,6 +35,9 @@ class AuthRepository {
           'users/$uid',
           UserProfile(uid: uid, name: name, email: email).toJson(),
         );
+      } catch (_) {}
+      try {
+        await _authService.sendEmailVerification();
       } catch (_) {}
       return UserProfile(uid: uid, name: name, email: email);
     } on Failure {
@@ -121,6 +125,32 @@ class AuthRepository {
   Future<void> saveFcmToken(String uid, String token) async {
     await _firestore.setDoc('users/$uid', {'fcmToken': token}, merge: true);
   }
+
+  Future<void> clearFcmToken(String uid) async {
+    try {
+      await _firestore.updateDoc('users/$uid', {
+        'fcmToken': FieldValue.delete(),
+      });
+    } catch (_) {}
+  }
+
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _authService.sendPasswordResetEmail(email);
+    } on fb.FirebaseAuthException catch (e) {
+      throw _mapAuthError(e);
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Check your internet connection and try again.',
+      );
+    }
+  }
+
+  Future<void> sendEmailVerification() => _authService.sendEmailVerification();
+
+  Future<bool> refreshEmailVerified() => _authService.refreshEmailVerified();
 
   Future<void> deleteAccount() async {
     final uid = _authService.currentUserId;

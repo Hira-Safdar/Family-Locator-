@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/group_categories.dart';
 
+import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/signup_screen.dart';
+import '../../features/error/not_found_screen.dart';
 import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
@@ -29,7 +31,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (!loggedIn) {
         if (state.matchedLocation == '/login' ||
-            state.matchedLocation == '/signup') {
+            state.matchedLocation == '/signup' ||
+            state.matchedLocation == '/forgot-password') {
           return null;
         }
         return '/login';
@@ -37,17 +40,29 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup' ||
+          state.matchedLocation == '/forgot-password' ||
           state.matchedLocation == '/') {
+        return '/home';
+      }
+
+      if (state.matchedLocation == '/members' &&
+          (state.uri.queryParameters['groupId'] ?? '').isEmpty) {
         return '/home';
       }
       return null;
     },
+    errorBuilder: (context, state) =>
+        NotFoundScreen(location: state.uri.toString()),
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
       GoRoute(

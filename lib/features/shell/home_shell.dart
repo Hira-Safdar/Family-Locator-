@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../group_setup/groups_screen.dart';
 import '../home_map/home_map_screen.dart';
@@ -49,9 +50,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: const [HomeScreen(), GroupsScreen(), SettingsScreen()],
+      body: Column(
+        children: [
+          const _EmailVerificationBanner(),
+          Expanded(
+            child: IndexedStack(
+              index: _index,
+              children: const [
+                HomeScreen(),
+                GroupsScreen(),
+                SettingsScreen(),
+              ],
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -73,6 +85,82 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             label: 'Settings',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EmailVerificationBanner extends ConsumerStatefulWidget {
+  const _EmailVerificationBanner();
+
+  @override
+  ConsumerState<_EmailVerificationBanner> createState() =>
+      _EmailVerificationBannerState();
+}
+
+class _EmailVerificationBannerState
+    extends ConsumerState<_EmailVerificationBanner> {
+  bool _sending = false;
+  bool _sent = false;
+
+  Future<void> _resend() async {
+    setState(() => _sending = true);
+    try {
+      await ref.read(authControllerProvider.notifier).resendVerification();
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _sent = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final verified = ref.watch(emailVerifiedProvider);
+    if (verified.value != false) return const SizedBox.shrink();
+
+    return Material(
+      color: AppColors.primary.withValues(alpha: 0.10),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+          child: Row(
+            children: [
+              const Icon(Icons.verified_user_outlined, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _sent
+                      ? 'Verification email sent. Check your inbox.'
+                      : 'Please verify your email address.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              _sending
+                  ? const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : TextButton(
+                      onPressed: _resend,
+                      child: const Text('Resend'),
+                    ),
+              IconButton(
+                tooltip: "I've verified",
+                icon: const Icon(Icons.refresh),
+                onPressed: () => ref.invalidate(emailVerifiedProvider),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

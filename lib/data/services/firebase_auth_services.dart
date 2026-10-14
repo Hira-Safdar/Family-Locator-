@@ -48,6 +48,25 @@ class FirebaseAuthServices {
     await _auth.currentUser?.delete();
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim());
+  }
+
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null || user.emailVerified) return;
+    await user.sendEmailVerification();
+  }
+
+  Future<bool> refreshEmailVerified() async {
+    final user = _auth.currentUser;
+    if (user == null) return true;
+    try {
+      await user.reload();
+    } catch (_) {}
+    return _auth.currentUser?.emailVerified ?? true;
+  }
+
   String? get currentUserId => _auth.currentUser?.uid;
   String? get currentUserName => _auth.currentUser?.displayName;
   String? get currentUserEmail => _auth.currentUser?.email;

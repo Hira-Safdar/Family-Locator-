@@ -17,4 +17,10 @@ class MessagingService {
     );
     return _messaging.getToken();
   }
+
+  Future<void> deleteToken() async {
+    try {
+      await _messaging.deleteToken();
+    } catch (_) {}
+  }
 }

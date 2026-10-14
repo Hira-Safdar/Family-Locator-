@@ -17,11 +17,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
   String? _nameError;
   String? _emailError;
   String? _passwordError;
+  String? _confirmError;
+  String? _termsError;
   String? _serverError;
   bool _locked = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+  bool _agreed = false;
 
   String? _validateEmail(String email) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
@@ -49,11 +55,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final passwordError = password.isEmpty
         ? 'Password cannot be empty'
         : _validatePassword(password);
-    if (nameError != null || emailError != null || passwordError != null) {
+    final confirmError = _confirmController.text.isEmpty
+        ? 'Confirm your password'
+        : (_confirmController.text != password
+              ? 'Passwords do not match'
+              : null);
+    final termsError = _agreed ? null : 'Please accept the Terms to continue';
+    if (nameError != null ||
+        emailError != null ||
+        passwordError != null ||
+        confirmError != null ||
+        termsError != null) {
       setState(() {
         _nameError = nameError;
         _emailError = emailError;
         _passwordError = passwordError;
+        _confirmError = confirmError;
+        _termsError = termsError;
         _serverError = null;
       });
       return;
@@ -90,6 +108,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
@@ -146,11 +165,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 TextField(
                   controller: _passwordController,
                   enabled: !_locked,
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
                     errorText: _passwordError,
                   ),
                   onChanged: (_) {
@@ -158,7 +186,59 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       setState(() => _passwordError = null);
                     }
                   },
+                ),
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: _confirmController,
+                  enabled: !_locked,
+                  obscureText: _obscureConfirm,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                    errorText: _confirmError,
+                  ),
+                  onChanged: (_) {
+                    if (_confirmError != null) {
+                      setState(() => _confirmError = null);
+                    }
+                  },
                   onSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: 8),
+
+                CheckboxListTile(
+                  value: _agreed,
+                  onChanged: _locked
+                      ? null
+                      : (value) => setState(() {
+                          _agreed = value ?? false;
+                          if (_agreed) _termsError = null;
+                        }),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: const Text(
+                    'I agree to the Terms of Service and Privacy Policy',
+                  ),
+                  subtitle: _termsError == null
+                      ? null
+                      : Text(
+                          _termsError!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
                 ),
                 if (_serverError != null) ...[
                   const SizedBox(height: 16),
