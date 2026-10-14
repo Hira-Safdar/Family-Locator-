@@ -53,7 +53,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: TextButton.styleFrom(
-              foregroundColor: confirmColor ?? AppColors.error,
+              foregroundColor: confirmColor ?? context.palette.error,
             ),
             child: Text(confirmLabel),
           ),
@@ -149,7 +149,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
       message:
           '$name will become the owner of "${group.name}". You will stay a member and will no longer manage this group.',
       confirmLabel: 'Make owner',
-      confirmColor: AppColors.primary,
+      confirmColor: context.palette.primary,
     );
     if (confirmed != true || !mounted) return;
 
@@ -197,13 +197,13 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
               const SizedBox(height: 12),
               Text(name, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
-              Text(role, style: const TextStyle(color: AppColors.textLight)),
+              Text(role, style: TextStyle(color: context.palette.textLight)),
               const SizedBox(height: 8),
               Text(
                 location == null
                     ? 'No location shared yet'
                     : 'Last seen ${DateFormatter.lastSeen(location.timestamp)}',
-                style: const TextStyle(color: AppColors.textLight),
+                style: TextStyle(color: context.palette.textLight),
               ),
               const SizedBox(height: 20),
               if (location != null)
@@ -278,8 +278,8 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: AppColors.error,
+                    style: TextStyle(
+                      color: context.palette.error,
                       fontSize: 13,
                     ),
                   ),
@@ -344,8 +344,8 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                       )
                     : OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                          side: const BorderSide(color: AppColors.error),
+                          foregroundColor: context.palette.error,
+                          side: BorderSide(color: context.palette.error),
                           minimumSize: const Size.fromHeight(50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -377,7 +377,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
           const SizedBox(height: 2),
           Text(
             '$count member${count == 1 ? '' : 's'}',
-            style: const TextStyle(fontSize: 13, color: AppColors.textLight),
+            style: TextStyle(fontSize: 13, color: context.palette.textLight),
           ),
         ],
       ),
@@ -440,16 +440,16 @@ class _MemberTile extends ConsumerWidget {
           ),
           if (memberIsOwner) ...[
             const SizedBox(width: 8),
-            _badge('Owner'),
+            _badge(context, 'Owner'),
           ] else if (isSelf) ...[
             const SizedBox(width: 8),
-            _badge('You'),
+            _badge(context, 'You'),
           ],
         ],
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(fontSize: 13, color: AppColors.textLight),
+        style: TextStyle(fontSize: 13, color: context.palette.textLight),
       ),
       trailing: busy
           ? const SizedBox(
@@ -467,16 +467,13 @@ class _MemberTile extends ConsumerWidget {
                         onRemove(uid, name);
                       }
                     },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: 'owner',
-                        child: Text('Make owner'),
-                      ),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'owner', child: Text('Make owner')),
                       PopupMenuItem(
                         value: 'remove',
                         child: Text(
                           'Remove member',
-                          style: TextStyle(color: AppColors.error),
+                          style: TextStyle(color: context.palette.error),
                         ),
                       ),
                     ],
@@ -485,19 +482,19 @@ class _MemberTile extends ConsumerWidget {
     );
   }
 
-  Widget _badge(String label) {
+  Widget _badge(BuildContext context, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
+        color: context.palette.primaryContainer,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: AppColors.primary,
+          color: context.palette.primary,
         ),
       ),
     );

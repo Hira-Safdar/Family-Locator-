@@ -55,7 +55,10 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
 
     final repo = ref.read(groupRepositoryProvider);
     try {
-      final taken = await repo.isNameTaken(name: name, category: widget.category);
+      final taken = await repo.isNameTaken(
+        name: name,
+        category: widget.category,
+      );
       if (!mounted || _nameController.text.trim() != name) return;
 
       if (!taken) {
@@ -124,7 +127,10 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
 
     final repo = ref.read(groupRepositoryProvider);
     try {
-      final taken = await repo.isNameTaken(name: name, category: widget.category);
+      final taken = await repo.isNameTaken(
+        name: name,
+        category: widget.category,
+      );
       if (taken) {
         final suggestions = await repo.suggestNames(
           name: name,
@@ -178,7 +184,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.group_add, size: 72, color: AppColors.primary),
+              Icon(Icons.group_add, size: 72, color: context.palette.primary),
               const SizedBox(height: 16),
               Text(
                 'Create a group to start tracking each other',
@@ -197,24 +203,22 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer,
+                          color: context.palette.primaryContainer,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.category_outlined,
                               size: 16,
-                              color: AppColors.primary,
+                              color: context.palette.primary,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               widget.category,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
-                                  ?.copyWith(color: AppColors.primary),
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(color: context.palette.primary),
                             ),
                           ],
                         ),
@@ -222,8 +226,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed:
-                        _locked ? null : () => context.go('/choose-group'),
+                    onPressed: _locked
+                        ? null
+                        : () => context.go('/choose-group'),
                     child: const Text('Change'),
                   ),
                 ],

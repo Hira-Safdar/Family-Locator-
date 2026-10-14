@@ -20,7 +20,6 @@ import '../../data/models/sos_alert.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/settings_provider.dart';
 
-
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -137,10 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     groupLocations.forEach((uid, point) {
       if (uid == selfUid) return;
       final selected = uid == _selectedUid;
-      final position = _spread(
-        LatLng(point.latitude, point.longitude),
-        placed,
-      );
+      final position = _spread(LatLng(point.latitude, point.longitude), placed);
       placed.add(position);
       markers.add(
         Marker(
@@ -179,13 +175,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: SafeArea(
               child: Container(
                 height: 56,
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.palette.surface,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: const [
                     BoxShadow(
@@ -197,10 +190,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.family_restroom,
-                      color: AppColors.primary,
-                    ),
+                    Icon(Icons.family_restroom, color: context.palette.primary),
                     const SizedBox(width: 12),
                     Text(
                       'Live Tracking',
@@ -231,8 +221,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Text(
                       locationError.hasError
                           ? (locationError.error is Failure
-                              ? (locationError.error as Failure).message
-                              : 'Something went wrong. Please check your internet connection and try again.')
+                                ? (locationError.error as Failure).message
+                                : 'Something went wrong. Please check your internet connection and try again.')
                           : 'Could not load member locations. Please check your internet connection and try again.',
                     ),
                   ),
@@ -285,19 +275,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               bottom: 16,
               child: _selectedUid != null && _selectedPoint != null
                   ? (_selectedUid == selfUid
-                      ? _youBox(
-                          activeGroup,
-                          groups,
-                          _selectedUid!,
-                          _selectedPoint!,
-                        )
-                      : _memberBox(
-                          activeGroup,
-                          groups,
-                          _selectedUid!,
-                          _selectedPoint!,
-                          myPoint,
-                        ))
+                        ? _youBox(
+                            activeGroup,
+                            groups,
+                            _selectedUid!,
+                            _selectedPoint!,
+                          )
+                        : _memberBox(
+                            activeGroup,
+                            groups,
+                            _selectedUid!,
+                            _selectedPoint!,
+                            myPoint,
+                          ))
                   : _groupBox(groups, activeGroup, myPoint),
             ),
 
@@ -307,8 +297,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: FloatingActionButton(
               heroTag: 'center',
               mini: true,
-              backgroundColor: AppColors.surface,
-              foregroundColor: AppColors.textDark,
+              backgroundColor: context.palette.surface,
+              foregroundColor: context.palette.textDark,
               tooltip: 'My location',
               onPressed: _centerOnMe,
               child: const Icon(Icons.my_location),
@@ -322,7 +312,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: FloatingActionButton(
                 heroTag: 'sos',
                 mini: true,
-                backgroundColor: AppColors.error,
+                backgroundColor: context.palette.error,
                 foregroundColor: Colors.white,
                 tooltip: 'Send SOS',
                 onPressed: () => _confirmSos(activeGroup!),
@@ -364,7 +354,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: context.palette.error),
             child: const Text('Send SOS'),
           ),
         ],
@@ -388,7 +378,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
     try {
-      await ref.read(groupRepositoryProvider).sendSos(
+      await ref
+          .read(groupRepositoryProvider)
+          .sendSos(
             groupId: group.id,
             latitude: point.latitude,
             longitude: point.longitude,
@@ -439,10 +431,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_notifiedSosKey == key) return;
     if (!ref.read(settingsProvider).notificationsEnabled) return;
     _notifiedSosKey = key;
-    ref.read(notificationServiceProvider).showSos(
-          senderName: sos.name,
-          groupName: group.name,
-        );
+    ref
+        .read(notificationServiceProvider)
+        .showSos(senderName: sos.name, groupName: group.name);
   }
 
   Future<void> _showSosError(String message) {
@@ -450,10 +441,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('SOS failed'),
-        content: Text(
-          message,
-          style: const TextStyle(color: AppColors.error),
-        ),
+        content: Text(message, style: TextStyle(color: context.palette.error)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -468,7 +456,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final sos = group.sos!;
     final isMine = sos.uid == selfUid;
     return Material(
-      color: AppColors.error,
+      color: context.palette.error,
       borderRadius: BorderRadius.circular(12),
       elevation: 4,
       child: Padding(
@@ -552,10 +540,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.primaryContainer,
-                child: Icon(Icons.group, size: 20, color: AppColors.primary),
+                backgroundColor: context.palette.primaryContainer,
+                child: Icon(
+                  Icons.group,
+                  size: 20,
+                  color: context.palette.primary,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -571,9 +563,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       '${active.memberIds.length} '
                       'member${active.memberIds.length == 1 ? '' : 's'}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textLight,
+                        color: context.palette.textLight,
                       ),
                     ),
                   ],
@@ -582,33 +574,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               IconButton(
                 tooltip: 'Next group',
                 icon: const Icon(Icons.chevron_right, size: 30),
-                color: AppColors.primary,
+                color: context.palette.primary,
                 onPressed: () => _nextGroup(groups),
               ),
             ],
           ),
           if (myPoint != null) ...[
             const SizedBox(height: 10),
-            const Divider(height: 1, color: AppColors.background),
+            Divider(height: 1, color: context.palette.background),
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.person, size: 18, color: AppColors.textLight),
+                Icon(Icons.person, size: 18, color: context.palette.textLight),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'You',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
+                    color: context.palette.textDark,
                   ),
                 ),
                 const Spacer(),
                 Text(
                   'Updated ${DateFormatter.lastSeen(myPoint.timestamp)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textLight,
+                    color: context.palette.textLight,
                   ),
                 ),
               ],
@@ -672,7 +664,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   IconButton(
                     tooltip: 'Next group',
                     icon: const Icon(Icons.chevron_right, size: 30),
-                    color: AppColors.primary,
+                    color: context.palette.primary,
                     onPressed: () => _nextGroup(groups),
                   ),
                 ],
@@ -688,7 +680,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Icons.warning_amber,
                   'Status',
                   'Location may be outdated',
-                  valueColor: AppColors.warning,
+                  valueColor: context.palette.warning,
                 ),
               if (myPoint != null)
                 _infoRow(
@@ -714,32 +706,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   '${point.batteryLevel}%',
                 ),
               const SizedBox(height: 10),
-              const Divider(height: 1, color: AppColors.background),
+              Divider(height: 1, color: context.palette.background),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'MEMBER OF',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textLight,
+                  color: context.palette.textLight,
                   letterSpacing: 0.6,
                 ),
               ),
               const SizedBox(height: 6),
               if (memberGroups.isEmpty)
-                const Text(
+                Text(
                   'No groups found',
-                  style: TextStyle(fontSize: 13, color: AppColors.textLight),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: context.palette.textLight,
+                  ),
                 ),
               for (final g in memberGroups)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.group_outlined,
                         size: 16,
-                        color: AppColors.primary,
+                        color: context.palette.primary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -747,18 +742,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           g.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textDark,
+                            color: context.palette.textDark,
                           ),
                         ),
                       ),
                       Text(
                         '${g.memberIds.length} '
                         'member${g.memberIds.length == 1 ? '' : 's'}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textLight,
+                          color: context.palette.textLight,
                         ),
                       ),
                     ],
@@ -812,15 +807,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryContainer,
+                        color: context.palette.primaryContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
+                      child: Text(
                         'You',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                          color: context.palette.primary,
                         ),
                       ),
                     ),
@@ -830,7 +825,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               IconButton(
                 tooltip: 'Next group',
                 icon: const Icon(Icons.chevron_right, size: 30),
-                color: AppColors.primary,
+                color: context.palette.primary,
                 onPressed: () => _nextGroup(groups),
               ),
             ],
@@ -846,7 +841,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Icons.warning_amber,
               'Status',
               'Location may be outdated',
-              valueColor: AppColors.warning,
+              valueColor: context.palette.warning,
             ),
           if (point.accuracy != null)
             _infoRow(
@@ -855,11 +850,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               '${point.accuracy!.round()} m',
             ),
           if (point.batteryLevel != null)
-            _infoRow(
-              Icons.battery_std,
-              'Battery',
-              '${point.batteryLevel}%',
-            ),
+            _infoRow(Icons.battery_std, 'Battery', '${point.batteryLevel}%'),
         ],
       ),
     );
@@ -869,15 +860,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
+        color: context.palette.primaryContainer,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Text(
+      child: Text(
         'Owner',
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: AppColors.primary,
+          color: context.palette.primary,
         ),
       ),
     );
@@ -893,11 +884,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: valueColor ?? AppColors.primary),
+          Icon(icon, size: 16, color: valueColor ?? context.palette.primary),
           const SizedBox(width: 8),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: AppColors.textLight),
+            style: TextStyle(fontSize: 13, color: context.palette.textLight),
           ),
           const Spacer(),
           Text(
@@ -905,7 +896,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: valueColor ?? AppColors.textDark,
+              color: valueColor ?? context.palette.textDark,
             ),
           ),
         ],
@@ -914,18 +905,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   bool _isStale(LocationPoint point) =>
-      DateTime.now().difference(point.timestamp) >
-      AppConfig.staleLocationAfter;
+      DateTime.now().difference(point.timestamp) > AppConfig.staleLocationAfter;
 
   BoxDecoration get _cardDecoration => BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
-      );
+    color: context.palette.surface,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: const [
+      BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
+    ],
+  );
 }

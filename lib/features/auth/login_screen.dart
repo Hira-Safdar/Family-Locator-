@@ -89,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Icon(
                   Icons.family_restroom,
                   size: 72,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -101,10 +101,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Text(
                   'Sign in to see your family on the map',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Colors.grey.shade600),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.palette.textLight,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 TextField(
@@ -160,7 +159,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     _serverError!,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 24),

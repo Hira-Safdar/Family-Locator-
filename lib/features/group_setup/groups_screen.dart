@@ -76,8 +76,8 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
+                backgroundColor: context.palette.primary,
+                foregroundColor: context.palette.onPrimary,
                 minimumSize: const Size.fromHeight(52),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -93,8 +93,8 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
-                side: const BorderSide(color: AppColors.primary, width: 1.4),
-                foregroundColor: AppColors.primary,
+                side: BorderSide(color: context.palette.primary, width: 1.4),
+                foregroundColor: context.palette.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -242,10 +242,10 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.groups_outlined,
               size: 80,
-              color: AppColors.textLight,
+              color: context.palette.textLight,
             ),
             const SizedBox(height: 16),
             Text(
@@ -256,9 +256,9 @@ class _EmptyState extends StatelessWidget {
             Text(
               'Create a new group or join an existing one using an invite code.',
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.palette.textLight,
+              ),
             ),
           ],
         ),
@@ -278,7 +278,7 @@ class _NoMatches extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search_off, size: 72, color: AppColors.textLight),
+            Icon(Icons.search_off, size: 72, color: context.palette.textLight),
             const SizedBox(height: 16),
             Text(
               'No matching groups',
@@ -288,9 +288,9 @@ class _NoMatches extends StatelessWidget {
             Text(
               'Try a different search or category filter.',
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.palette.textLight,
+              ),
             ),
           ],
         ),
@@ -322,7 +322,7 @@ class _GroupCard extends ConsumerWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
@@ -336,13 +336,13 @@ class _GroupCard extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: AppColors.background,
+              backgroundColor: context.palette.background,
               child: Text(
                 group.name.isEmpty ? '?' : group.name[0].toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
+                  color: context.palette.textDark,
                 ),
               ),
             ),
@@ -369,14 +369,14 @@ class _GroupCard extends ConsumerWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryContainer,
+                            color: context.palette.primaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Owner',
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
-                                  color: AppColors.primary,
+                                  color: context.palette.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
@@ -386,10 +386,10 @@ class _GroupCard extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.group_outlined,
                         size: 15,
-                        color: AppColors.textLight,
+                        color: context.palette.textLight,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -403,7 +403,7 @@ class _GroupCard extends ConsumerWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.background,
+                          color: context.palette.background,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -424,14 +424,14 @@ class _GroupCard extends ConsumerWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color: context.palette.background,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         group.inviteCode,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           letterSpacing: 3,
-                          color: AppColors.primary,
+                          color: context.palette.primary,
                         ),
                       ),
                     ),
@@ -456,7 +456,10 @@ class _GroupCard extends ConsumerWidget {
               itemBuilder: (context) => [
                 if (isOwner)
                   const PopupMenuItem(value: 'edit', child: Text('Edit name')),
-                const PopupMenuItem(value: 'share', child: Text('Share invite')),
+                const PopupMenuItem(
+                  value: 'share',
+                  child: Text('Share invite'),
+                ),
                 const PopupMenuItem(value: 'qr', child: Text('Show QR')),
               ],
             ),
@@ -478,8 +481,8 @@ class _GroupCard extends ConsumerWidget {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: AppColors.background,
-              child: const Icon(Icons.qr_code_2, color: AppColors.textDark),
+              backgroundColor: context.palette.background,
+              child: Icon(Icons.qr_code_2, color: context.palette.textDark),
             ),
             const SizedBox(width: 12),
             const Expanded(child: Text('Invite QR')),
@@ -511,13 +514,13 @@ class _GroupCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: context.palette.background,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 group.inviteCode,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                   letterSpacing: 4,
                 ),
               ),
@@ -572,10 +575,9 @@ class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
       _error = null;
     });
     try {
-      await ref.read(groupControllerProvider.notifier).renameGroup(
-            groupId: widget.group.id,
-            name: name,
-          );
+      await ref
+          .read(groupControllerProvider.notifier)
+          .renameGroup(groupId: widget.group.id, name: name);
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {
@@ -612,7 +614,7 @@ class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
               _error!,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
+              ).textTheme.bodyMedium?.copyWith(color: context.palette.error),
             ),
           ],
         ],

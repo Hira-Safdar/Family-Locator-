@@ -108,7 +108,9 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
       _error = null;
     });
     try {
-      await ref.read(authControllerProvider.notifier).updateProfile(
+      await ref
+          .read(authControllerProvider.notifier)
+          .updateProfile(
             name: name,
             photoFilePath: _pickedPath,
             phone: _phoneController.text.trim(),
@@ -160,13 +162,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
                 final name = profile?.name ?? '';
                 final email = profile?.email ?? '';
                 final phone = profile?.phone ?? '';
-                return _viewBody(
-                  theme,
-                  profile?.photoUrl,
-                  name,
-                  email,
-                  phone,
-                );
+                return _viewBody(theme, profile?.photoUrl, name, email, phone);
               },
             ),
     );
@@ -198,8 +194,9 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           Center(
             child: Text(
               email,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: AppColors.textLight),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: context.palette.textLight,
+              ),
             ),
           ),
         ],
@@ -209,16 +206,17 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.phone_outlined,
                   size: 16,
-                  color: AppColors.textLight,
+                  color: context.palette.textLight,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   phone,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: AppColors.textLight),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: context.palette.textLight,
+                  ),
                 ),
               ],
             ),
@@ -251,10 +249,10 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
                       _removePhoto = true;
                       _pickedPath = null;
                     }),
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
-              label: const Text(
+              icon: Icon(Icons.delete_outline, color: context.palette.error),
+              label: Text(
                 'Remove photo',
-                style: TextStyle(color: AppColors.error),
+                style: TextStyle(color: context.palette.error),
               ),
             ),
           ),
@@ -268,8 +266,9 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           decoration: InputDecoration(
             labelText: 'Display name',
             counterText: '',
-            errorText:
-                _showNameError && name.isEmpty ? 'Enter your name' : null,
+            errorText: _showNameError && name.isEmpty
+                ? 'Enter your name'
+                : null,
           ),
         ),
         const SizedBox(height: 16),
@@ -287,15 +286,13 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           const SizedBox(height: 12),
           Text(
             _error!,
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.error),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: context.palette.error,
+            ),
           ),
         ],
         const SizedBox(height: 24),
-        CustomButton(
-          label: 'Save',
-          isLoading: _locked,
-          onPressed: _save,
-        ),
+        CustomButton(label: 'Save', isLoading: _locked, onPressed: _save),
         TextButton(
           onPressed: _locked ? null : _cancelEdit,
           child: const Text('Cancel'),
@@ -312,7 +309,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
         if (path != null)
           CircleAvatar(
             radius: 48,
-            backgroundColor: AppColors.background,
+            backgroundColor: context.palette.background,
             backgroundImage: FileImage(File(path)),
           )
         else
@@ -325,17 +322,17 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           right: 0,
           bottom: 0,
           child: Material(
-            color: AppColors.primary,
+            color: context.palette.primary,
             shape: const CircleBorder(),
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: _locked ? null : _showPhotoSheet,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(8),
                 child: Icon(
                   Icons.camera_alt,
                   size: 20,
-                  color: AppColors.onPrimary,
+                  color: context.palette.onPrimary,
                 ),
               ),
             ),

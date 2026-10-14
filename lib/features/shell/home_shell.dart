@@ -56,11 +56,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           Expanded(
             child: IndexedStack(
               index: _index,
-              children: const [
-                HomeScreen(),
-                GroupsScreen(),
-                SettingsScreen(),
-              ],
+              children: const [HomeScreen(), GroupsScreen(), SettingsScreen()],
             ),
           ),
         ],
@@ -123,14 +119,17 @@ class _EmailVerificationBannerState
     if (verified.value != false) return const SizedBox.shrink();
 
     return Material(
-      color: AppColors.primary.withValues(alpha: 0.10),
+      color: context.palette.primary.withValues(alpha: 0.10),
       child: SafeArea(
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
           child: Row(
             children: [
-              const Icon(Icons.verified_user_outlined, color: AppColors.primary),
+              Icon(
+                Icons.verified_user_outlined,
+                color: context.palette.primary,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -149,10 +148,7 @@ class _EmailVerificationBannerState
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     )
-                  : TextButton(
-                      onPressed: _resend,
-                      child: const Text('Resend'),
-                    ),
+                  : TextButton(onPressed: _resend, child: const Text('Resend')),
               IconButton(
                 tooltip: "I've verified",
                 icon: const Icon(Icons.refresh),

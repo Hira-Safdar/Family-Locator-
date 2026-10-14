@@ -107,7 +107,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             'For your security, enter your current password, then choose a new one.',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+            ).textTheme.bodyMedium?.copyWith(color: context.palette.textLight),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -179,7 +179,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               _serverError!,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
+              ).textTheme.bodyMedium?.copyWith(color: context.palette.error),
             ),
           ],
           const SizedBox(height: 28),

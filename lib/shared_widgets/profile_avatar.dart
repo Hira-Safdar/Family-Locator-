@@ -21,7 +21,7 @@ class ProfileAvatar extends StatelessWidget {
     final image = _image();
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.primaryContainer,
+      backgroundColor: context.palette.primaryContainer,
       backgroundImage: image,
       child: image == null
           ? Text(
@@ -29,7 +29,7 @@ class ProfileAvatar extends StatelessWidget {
               style: TextStyle(
                 fontSize: radius * 0.8,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                color: context.palette.primary,
               ),
             )
           : null,

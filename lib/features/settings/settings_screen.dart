@@ -64,9 +64,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   Color get _locationColor {
-    if (_always.isGranted || _whenInUse.isGranted) return AppColors.success;
-    if (_whenInUse.isPermanentlyDenied) return AppColors.error;
-    return AppColors.warning;
+    if (_always.isGranted || _whenInUse.isGranted) {
+      return context.palette.success;
+    }
+    if (_whenInUse.isPermanentlyDenied) return context.palette.error;
+    return context.palette.warning;
   }
 
   IconData get _locationIcon {
@@ -90,7 +92,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ListTile(
                 title: Text(_intervalLabel(option)),
                 trailing: option == current
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: context.palette.primary)
                     : null,
                 onTap: () => Navigator.of(sheetContext).pop(option),
               ),
@@ -113,6 +115,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     if (url.isEmpty) return;
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  String _themeModeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+      default:
+        return 'System default';
+    }
+  }
+
+  Future<void> _pickThemeMode(ThemeMode current) async {
+    final selected = await showDialog<ThemeMode>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Appearance'),
+        children: [
+          for (final mode in ThemeMode.values)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(mode),
+              child: Row(
+                children: [
+                  Expanded(child: Text(_themeModeLabel(mode))),
+                  if (mode == current)
+                    Icon(Icons.check, color: context.palette.primary),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (selected != null) {
+      ref.read(settingsProvider.notifier).setThemeMode(selected);
+    }
   }
 
   Future<void> _setNotifications(bool enabled) async {
@@ -152,7 +190,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             const SizedBox(height: 4),
             Text(
               'Version ${info.version} (build ${info.buildNumber})',
-              style: const TextStyle(color: AppColors.textLight),
+              style: TextStyle(color: context.palette.textLight),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -207,6 +245,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             onTap: openAppSettings,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.brightness_6_outlined),
+            title: const Text('Appearance'),
+            subtitle: Text(_themeModeLabel(settings.themeMode)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _pickThemeMode(settings.themeMode),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
             title: const Text('Notifications'),
@@ -258,10 +304,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: AppColors.error),
-            title: const Text(
+            leading: Icon(Icons.delete_outline, color: context.palette.error),
+            title: Text(
               'Delete Profile',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: context.palette.error),
             ),
             onTap: _confirmDelete,
           ),
@@ -323,8 +369,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
+                foregroundColor: context.palette.error,
+                side: BorderSide(color: context.palette.error),
                 minimumSize: const Size.fromHeight(48),
               ),
               onPressed: _confirmLogout,
@@ -344,7 +390,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.textLight,
+          color: context.palette.textLight,
           letterSpacing: 0.5,
         ),
       ),
@@ -367,7 +413,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
@@ -403,7 +449,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textLight),
+            Icon(Icons.chevron_right, color: context.palette.textLight),
           ],
         ),
       ),
@@ -428,7 +474,10 @@ class _LogoutConfirmDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Log out', style: TextStyle(color: AppColors.error)),
+          child: Text(
+            'Log out',
+            style: TextStyle(color: context.palette.error),
+          ),
         ),
       ],
     );
@@ -483,7 +532,7 @@ class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
               _error!,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
+              ).textTheme.bodyMedium?.copyWith(color: context.palette.error),
             ),
           ],
         ],
@@ -501,7 +550,7 @@ class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
                   width: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Delete', style: TextStyle(color: AppColors.error)),
+              : Text('Delete', style: TextStyle(color: context.palette.error)),
         ),
       ],
     );

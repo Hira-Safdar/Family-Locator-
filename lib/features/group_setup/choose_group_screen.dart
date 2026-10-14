@@ -60,8 +60,7 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
                       icon: _icons[category] ?? Icons.group_outlined,
                       hint: _hints[category] ?? '',
                       selected: _selected == category,
-                      onTap: () =>
-                          setState(() => _selected = category),
+                      onTap: () => setState(() => _selected = category),
                     ),
                 ],
               ),
@@ -100,11 +99,13 @@ class _CategoryCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Material(
-        color: AppColors.surface,
+        color: context.palette.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: selected ? AppColors.primary : Colors.black12,
+            color: selected
+                ? context.palette.primary
+                : context.palette.textLight.withValues(alpha: 0.3),
             width: selected ? 2 : 1,
           ),
         ),
@@ -118,11 +119,13 @@ class _CategoryCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 22,
                   backgroundColor: selected
-                      ? AppColors.primary
-                      : AppColors.primaryContainer,
+                      ? context.palette.primary
+                      : context.palette.primaryContainer,
                   child: Icon(
                     icon,
-                    color: selected ? AppColors.onPrimary : AppColors.primary,
+                    color: selected
+                        ? context.palette.onPrimary
+                        : context.palette.primary,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -130,18 +133,20 @@ class _CategoryCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(category, style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 2),
                       Text(
-                        hint,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        category,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
+                      const SizedBox(height: 2),
+                      Text(hint, style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),
                 ),
                 Icon(
                   selected ? Icons.check_circle : Icons.circle_outlined,
-                  color: selected ? AppColors.primary : AppColors.textLight,
+                  color: selected
+                      ? context.palette.primary
+                      : context.palette.textLight,
                 ),
               ],
             ),

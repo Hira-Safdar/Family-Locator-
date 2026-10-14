@@ -13,8 +13,7 @@ class PrivacyControlsScreen extends ConsumerStatefulWidget {
       _PrivacyControlsScreenState();
 }
 
-class _PrivacyControlsScreenState
-    extends ConsumerState<PrivacyControlsScreen> {
+class _PrivacyControlsScreenState extends ConsumerState<PrivacyControlsScreen> {
   bool _clearing = false;
   bool _cleared = false;
   String? _error;
@@ -54,7 +53,7 @@ class _PrivacyControlsScreenState
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: context.palette.error),
             child: const Text('Clear'),
           ),
         ],
@@ -109,7 +108,7 @@ class _PrivacyControlsScreenState
           _sectionHeader(context, 'Location History'),
           ListTile(
             enabled: !_clearing,
-            leading: const Icon(Icons.delete_outline, color: AppColors.error),
+            leading: Icon(Icons.delete_outline, color: context.palette.error),
             title: const Text('Clear my location history'),
             subtitle: Text(
               _clearing
@@ -127,11 +126,11 @@ class _PrivacyControlsScreenState
           ),
           if (_cleared) ...[
             const SizedBox(height: 4),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Location history cleared.',
-                style: TextStyle(color: AppColors.success, fontSize: 13),
+                style: TextStyle(color: context.palette.success, fontSize: 13),
               ),
             ),
           ],
@@ -142,7 +141,7 @@ class _PrivacyControlsScreenState
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _error!,
-                style: const TextStyle(color: AppColors.error, fontSize: 13),
+                style: TextStyle(color: context.palette.error, fontSize: 13),
               ),
             ),
           ],
@@ -157,9 +156,9 @@ class _PrivacyControlsScreenState
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.textLight,
-              letterSpacing: 0.5,
-            ),
+          color: context.palette.textLight,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

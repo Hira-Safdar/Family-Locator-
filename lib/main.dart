@@ -37,11 +37,14 @@ class FamilyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(
+      settingsProvider.select((settings) => settings.themeMode),
+    );
     return MaterialApp.router(
       title: AppStrings.appName,
       theme: AppTheme.light,
-      darkTheme: AppTheme.light,
-      themeMode: ThemeMode.system,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }

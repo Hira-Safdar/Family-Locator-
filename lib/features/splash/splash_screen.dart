@@ -15,8 +15,8 @@ class SplashScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
+              decoration: BoxDecoration(
+                color: context.palette.primary,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -29,11 +29,11 @@ class SplashScreen extends StatelessWidget {
             Text(
               AppStrings.appName,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppColors.primary,
-                  ),
+                color: context.palette.primary,
+              ),
             ),
             const SizedBox(height: 32),
-            const CircularProgressIndicator(color: AppColors.primary),
+            CircularProgressIndicator(color: context.palette.primary),
           ],
         ),
       ),

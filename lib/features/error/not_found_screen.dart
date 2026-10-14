@@ -21,10 +21,10 @@ class NotFoundScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
+                Icon(
                   Icons.explore_off_outlined,
                   size: 72,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -36,9 +36,9 @@ class NotFoundScreen extends StatelessWidget {
                 Text(
                   "We couldn't find $location.",
                   textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.palette.textLight,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 CustomButton(

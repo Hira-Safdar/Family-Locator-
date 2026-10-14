@@ -51,8 +51,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
     }
     if (code.length != AppConfig.inviteCodelength) {
       setState(() {
-        _codeError =
-            'Code must be ${AppConfig.inviteCodelength} characters';
+        _codeError = 'Code must be ${AppConfig.inviteCodelength} characters';
         _serverError = null;
       });
       return;
@@ -124,9 +123,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                 Text(
                   _serverError!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
               const SizedBox(height: 24),
@@ -135,12 +132,12 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                 isLoading: state.isLoading,
                 onPressed: _submit,
               ),
-               const SizedBox(height: 12),
+              const SizedBox(height: 12),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
-                  side: const BorderSide(color: AppColors.primary),
-                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: context.palette.primary),
+                  foregroundColor: context.palette.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

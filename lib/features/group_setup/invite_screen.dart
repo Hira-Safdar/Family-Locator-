@@ -27,10 +27,10 @@ class InviteScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle_outline,
                 size: 72,
-                color: AppColors.success,
+                color: context.palette.success,
               ),
               const SizedBox(height: 12),
               Text(
@@ -48,9 +48,9 @@ class InviteScreen extends StatelessWidget {
               Text(
                 'Share this code or QR with the people you want to add.',
                 textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: context.palette.textLight,
+                ),
               ),
               const SizedBox(height: 24),
               Center(
@@ -79,7 +79,7 @@ class InviteScreen extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
+                      color: context.palette.primaryContainer,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -89,15 +89,15 @@ class InviteScreen extends StatelessWidget {
                           code,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
-                                color: AppColors.primary,
+                                color: context.palette.primary,
                                 letterSpacing: 4,
                               ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(
+                        Icon(
                           Icons.copy,
                           size: 18,
-                          color: AppColors.primary,
+                          color: context.palette.primary,
                         ),
                       ],
                     ),
@@ -108,8 +108,8 @@ class InviteScreen extends StatelessWidget {
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
-                  side: const BorderSide(color: AppColors.primary, width: 1.4),
-                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: context.palette.primary, width: 1.4),
+                  foregroundColor: context.palette.primary,
                 ),
                 onPressed: () => copyInviteCode(context, code),
                 icon: const Icon(Icons.copy),

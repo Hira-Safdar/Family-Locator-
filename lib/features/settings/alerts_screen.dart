@@ -98,16 +98,17 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
               ),
               Expanded(
                 child: alerts.isEmpty
-                    ? const Center(
-                        child: Text('No alerts match this filter.'),
-                      )
+                    ? const Center(child: Text('No alerts match this filter.'))
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: alerts.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) => _AlertCard(
                           alert: alerts[index],
-                          groupName: _groupNameFor(groups, alerts[index].groupId),
+                          groupName: _groupNameFor(
+                            groups,
+                            alerts[index].groupId,
+                          ),
                         ),
                       ),
               ),
@@ -136,7 +137,9 @@ class _AlertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolved = alert.resolvedAt != null;
-    final accentColor = resolved ? AppColors.success : AppColors.error;
+    final accentColor = resolved
+        ? context.palette.success
+        : context.palette.error;
 
     return InkWell(
       onTap: () => context.push(
@@ -147,7 +150,7 @@ class _AlertCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
@@ -184,18 +187,18 @@ class _AlertCard extends StatelessWidget {
                       groupName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.textLight,
+                        color: context.palette.textLight,
                       ),
                     ),
                   const SizedBox(height: 4),
                   Text(
                     'Sent ${DateFormatter.lastSeen(alert.createdAt)}'
                     '${resolved ? ' · Resolved ${DateFormatter.lastSeen(alert.resolvedAt!)}' : ''}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textLight,
+                      color: context.palette.textLight,
                     ),
                   ),
                 ],
@@ -211,7 +214,7 @@ class _AlertCard extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: context.palette.background,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -224,10 +227,10 @@ class _AlertCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Icon(
+                Icon(
                   Icons.map_outlined,
                   size: 18,
-                  color: AppColors.textLight,
+                  color: context.palette.textLight,
                 ),
               ],
             ),
@@ -275,14 +278,16 @@ class _ClearAlertsDialogState extends ConsumerState<_ClearAlertsDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('This removes all of your past SOS alerts. This cannot be undone.'),
+          const Text(
+            'This removes all of your past SOS alerts. This cannot be undone.',
+          ),
           if (_error != null) ...[
             const SizedBox(height: 12),
             Text(
               _error!,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
+              ).textTheme.bodyMedium?.copyWith(color: context.palette.error),
             ),
           ],
         ],
@@ -300,7 +305,7 @@ class _ClearAlertsDialogState extends ConsumerState<_ClearAlertsDialog> {
                   width: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Clear', style: TextStyle(color: AppColors.error)),
+              : Text('Clear', style: TextStyle(color: context.palette.error)),
         ),
       ],
     );

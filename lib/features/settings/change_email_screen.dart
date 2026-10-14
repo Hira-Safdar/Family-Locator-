@@ -115,13 +115,13 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
             'For your security, enter your current password, then your new email address.',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+            ).textTheme.bodyMedium?.copyWith(color: context.palette.textLight),
           ),
           const SizedBox(height: 16),
           if (currentEmail.isNotEmpty)
             Row(
               children: [
-                const Icon(Icons.email_outlined, color: AppColors.textLight),
+                Icon(Icons.email_outlined, color: context.palette.textLight),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -176,7 +176,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
               _serverError!,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
+              ).textTheme.bodyMedium?.copyWith(color: context.palette.error),
             ),
           ],
           const SizedBox(height: 28),

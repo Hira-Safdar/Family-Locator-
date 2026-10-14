@@ -89,7 +89,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Icon(Icons.lock_reset, size: 72, color: AppColors.primary),
+        Icon(Icons.lock_reset, size: 72, color: context.palette.primary),
         const SizedBox(height: 16),
         Text(
           'Forgot password?',
@@ -102,7 +102,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+          ).textTheme.bodyMedium?.copyWith(color: context.palette.textLight),
         ),
         const SizedBox(height: 32),
         TextField(
@@ -154,7 +154,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(Icons.mark_email_read_outlined, size: 72, color: AppColors.success),
+        Icon(
+          Icons.mark_email_read_outlined,
+          size: 72,
+          color: context.palette.success,
+        ),
         const SizedBox(height: 16),
         Text(
           'Check your email',
@@ -168,7 +172,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+          ).textTheme.bodyMedium?.copyWith(color: context.palette.textLight),
         ),
         const SizedBox(height: 32),
         CustomButton(
