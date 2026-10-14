@@ -51,3 +51,4 @@ firebase_options.dart
 # FCM service account for demo push (never commit)
 fcm_secrets.json
 fcm_service_account.json
+*firebase-adminsdk*.json
