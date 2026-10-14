@@ -8,6 +8,19 @@ import '../data/repositories/location_repository.dart';
 import 'group_provider.dart';
 import 'location_provider.dart';
 
+Stream<Map<String, LocationPoint>> _locationsFor(
+  List<String> memberIds,
+  LocationRepository repo,
+) {
+  return _combineMemberLocations(memberIds, repo).map(
+    (map) => Map<String, LocationPoint>.fromEntries(
+      map.entries
+          .where((entry) => entry.value != null)
+          .map((entry) => MapEntry(entry.key, entry.value!)),
+    ),
+  );
+}
+
 final memberLocationsProvider = StreamProvider<Map<String, LocationPoint>>((ref) {
   final repo = ref.watch(locationRepositoryProvider);
   final groups = ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
@@ -19,13 +32,22 @@ final memberLocationsProvider = StreamProvider<Map<String, LocationPoint>>((ref)
     orElse: () => groups.first,
   );
 
-  return _combineMemberLocations(active.memberIds, repo).map(
-    (map) => Map<String, LocationPoint>.fromEntries(
-      map.entries
-          .where((entry) => entry.value != null)
-          .map((entry) => MapEntry(entry.key, entry.value!)),
-    ),
-  );
+  return _locationsFor(active.memberIds, repo);
+});
+
+final groupMemberLocationsProvider =
+    StreamProvider.family<Map<String, LocationPoint>, String>((ref, groupId) {
+  final repo = ref.watch(locationRepositoryProvider);
+  final groups = ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
+  GroupModel? group;
+  for (final g in groups) {
+    if (g.id == groupId) {
+      group = g;
+      break;
+    }
+  }
+  if (group == null) return Stream.value(const <String, LocationPoint>{});
+  return _locationsFor(group.memberIds, repo);
 });
 
 Stream<Map<String, LocationPoint?>> _combineMemberLocations(

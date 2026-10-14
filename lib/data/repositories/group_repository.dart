@@ -318,6 +318,45 @@ class GroupRepository {
     }
   }
 
+  Future<void> transferOwnership({
+    required String groupId,
+    required String newOwnerId,
+  }) async {
+    try {
+      final me = _authService.currentUserId;
+      if (me == null) {
+        throw const AuthFailure('You need to be signed in.');
+      }
+      final data = await _firestore.getDoc('groups/$groupId');
+      if (data == null) {
+        throw const FirestoreFailure('This group no longer exists.');
+      }
+      if (data['ownerId'] != me) {
+        throw const FirestoreFailure(
+          'Only the group owner can transfer ownership.',
+        );
+      }
+      final members = List<String>.from(data['memberIds'] as List? ?? const []);
+      if (!members.contains(newOwnerId)) {
+        throw const FirestoreFailure(
+          'That person is not a member of this group.',
+        );
+      }
+      await _firestore.updateDoc('groups/$groupId', {
+        'ownerId': newOwnerId,
+        'memberIds': FieldValue.arrayUnion([newOwnerId]),
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not transfer ownership. Please check your internet connection and try again.',
+      );
+    }
+  }
+
   Future<void> removeMember({
     required String groupId,
     required String uid,

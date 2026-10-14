@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
+import '../../core/utils/date_formatter.dart';
 import '../../data/models/group_model.dart';
+import '../../data/models/location_point.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
+import '../../providers/member_locations_provider.dart';
 import '../../shared_widgets/profile_avatar.dart';
 
 class MembersScreen extends ConsumerStatefulWidget {
@@ -18,14 +22,23 @@ class MembersScreen extends ConsumerStatefulWidget {
 }
 
 class _MembersScreenState extends ConsumerState<MembersScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
   String? _busyUid;
   String? _error;
   bool _actionBusy = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<bool?> _confirm({
     required String title,
     required String message,
     required String confirmLabel,
+    Color? confirmColor,
   }) {
     return showDialog<bool>(
       context: context,
@@ -39,7 +52,9 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(
+              foregroundColor: confirmColor ?? AppColors.error,
+            ),
             child: Text(confirmLabel),
           ),
         ],
@@ -100,23 +115,10 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
   }
 
   Future<void> _remove(GroupModel group, String uid, String name) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove member?'),
-        content: Text('Remove $name from "${group.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+    final confirmed = await _confirm(
+      title: 'Remove member?',
+      message: 'Remove $name from "${group.name}"?',
+      confirmLabel: 'Remove',
     );
     if (confirmed != true || !mounted) return;
 
@@ -141,10 +143,99 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
     }
   }
 
+  Future<void> _makeOwner(GroupModel group, String uid, String name) async {
+    final confirmed = await _confirm(
+      title: 'Transfer ownership?',
+      message:
+          '$name will become the owner of "${group.name}". You will stay a member and will no longer manage this group.',
+      confirmLabel: 'Make owner',
+      confirmColor: AppColors.primary,
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _busyUid = uid;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(groupRepositoryProvider)
+          .transferOwnership(groupId: group.id, newOwnerId: uid);
+      if (!mounted) return;
+      setState(() => _busyUid = null);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busyUid = null;
+        _error = e is Failure
+            ? e.message
+            : 'Could not transfer ownership. Please try again.';
+      });
+    }
+  }
+
+  void _openMember({
+    required String name,
+    required String? photoUrl,
+    required bool memberIsOwner,
+    required bool isSelf,
+    required LocationPoint? location,
+  }) {
+    final role = memberIsOwner
+        ? 'Group owner'
+        : (isSelf ? 'You (member)' : 'Member');
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ProfileAvatar(name: name, photoUrl: photoUrl, radius: 36),
+              const SizedBox(height: 12),
+              Text(name, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text(role, style: const TextStyle(color: AppColors.textLight)),
+              const SizedBox(height: 8),
+              Text(
+                location == null
+                    ? 'No location shared yet'
+                    : 'Last seen ${DateFormatter.lastSeen(location.timestamp)}',
+                style: const TextStyle(color: AppColors.textLight),
+              ),
+              const SizedBox(height: 20),
+              if (location != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      context.push(
+                        '/alert-map?lat=${location.latitude}'
+                        '&lng=${location.longitude}'
+                        '&name=${Uri.encodeComponent(name)}',
+                      );
+                    },
+                    icon: const Icon(Icons.map_outlined),
+                    label: const Text('View on map'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupsAsync = ref.watch(myGroupsStreamProvider);
     final selfUid = ref.watch(authStateProvider).value;
+    final locations =
+        ref.watch(groupMemberLocationsProvider(widget.groupId)).value ??
+        const <String, LocationPoint>{};
 
     return Scaffold(
       appBar: AppBar(title: const Text('Members')),
@@ -170,6 +261,13 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
             );
           }
           final isOwner = group.ownerId == selfUid;
+          final query = _query.trim().toLowerCase();
+          final visible = group.memberIds.where((uid) {
+            if (query.isEmpty) return true;
+            final name = ref.watch(userProfileProvider(uid)).value?.name ?? '';
+            return name.toLowerCase().contains(query) ||
+                uid.toLowerCase().contains(query);
+          }).toList();
 
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -186,15 +284,53 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                     ),
                   ),
                 ),
-              for (final uid in group.memberIds)
+              if (group.memberIds.length > 3)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: TextField(
+                    controller: _searchController,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: 'Search members',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _query.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _query = '');
+                              },
+                            ),
+                      isDense: true,
+                    ),
+                    onChanged: (value) => setState(() => _query = value),
+                  ),
+                ),
+              if (visible.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: Text('No members match your search.')),
+                ),
+              for (final uid in visible)
                 _MemberTile(
                   uid: uid,
                   memberIsOwner: group.ownerId == uid,
                   isSelf: uid == selfUid,
                   canManage: isOwner,
                   busy: _busyUid == uid,
+                  location: locations[uid],
                   onRemove: (memberUid, name) =>
                       _remove(group!, memberUid, name),
+                  onMakeOwner: (memberUid, name) =>
+                      _makeOwner(group!, memberUid, name),
+                  onOpen: (name, photoUrl) => _openMember(
+                    name: name,
+                    photoUrl: photoUrl,
+                    memberIsOwner: group!.ownerId == uid,
+                    isSelf: uid == selfUid,
+                    location: locations[uid],
+                  ),
                 ),
               const SizedBox(height: 16),
               Padding(
@@ -256,7 +392,10 @@ class _MemberTile extends ConsumerWidget {
     required this.isSelf,
     required this.canManage,
     required this.busy,
+    required this.location,
     required this.onRemove,
+    required this.onMakeOwner,
+    required this.onOpen,
   });
 
   final String uid;
@@ -264,7 +403,10 @@ class _MemberTile extends ConsumerWidget {
   final bool isSelf;
   final bool canManage;
   final bool busy;
+  final LocationPoint? location;
   final void Function(String uid, String name) onRemove;
+  final void Function(String uid, String name) onMakeOwner;
+  final void Function(String name, String? photoUrl) onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -273,9 +415,14 @@ class _MemberTile extends ConsumerWidget {
         ? uid.substring(uid.length - 4).toUpperCase()
         : uid.toUpperCase();
     final name = profile?.name ?? 'Member $shortId';
-    final showRemove = canManage && !isSelf && !memberIsOwner;
+    final showManage = canManage && !isSelf && !memberIsOwner;
+
+    final subtitle = location == null
+        ? (isSelf ? 'This is you' : 'No location shared yet')
+        : 'Last seen ${DateFormatter.lastSeen(location!.timestamp)}';
 
     return ListTile(
+      onTap: () => onOpen(name, profile?.photoUrl),
       leading: ProfileAvatar(
         name: name,
         photoUrl: profile?.photoUrl,
@@ -300,23 +447,41 @@ class _MemberTile extends ConsumerWidget {
           ],
         ],
       ),
-      subtitle: isSelf ? const Text('This is you') : null,
-      trailing: showRemove
-          ? (busy
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 13, color: AppColors.textLight),
+      ),
+      trailing: busy
+          ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : (showManage
+                ? PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      if (value == 'owner') {
+                        onMakeOwner(uid, name);
+                      } else if (value == 'remove') {
+                        onRemove(uid, name);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'owner',
+                        child: Text('Make owner'),
+                      ),
+                      PopupMenuItem(
+                        value: 'remove',
+                        child: Text(
+                          'Remove member',
+                          style: TextStyle(color: AppColors.error),
+                        ),
+                      ),
+                    ],
                   )
-                : IconButton(
-                    tooltip: 'Remove member',
-                    icon: const Icon(
-                      Icons.person_remove_outlined,
-                      color: AppColors.error,
-                    ),
-                    onPressed: () => onRemove(uid, name),
-                  ))
-          : null,
+                : null),
     );
   }
 
