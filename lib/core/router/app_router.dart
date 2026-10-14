@@ -9,6 +9,7 @@ import '../../features/auth/signup_screen.dart';
 import '../../features/error/not_found_screen.dart';
 import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
+import '../../features/group_setup/invite_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
 import '../../features/settings/alerts_screen.dart';
 import '../../features/settings/change_password_screen.dart';
@@ -79,6 +80,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/join-group',
         builder: (context, state) => const JoinGroupScreen(),
+      ),
+      GoRoute(
+        path: '/invite',
+        builder: (context, state) => InviteScreen(
+          code: state.uri.queryParameters['code'] ?? '',
+          name: state.uri.queryParameters['name'] ?? 'Your group',
+        ),
       ),
       GoRoute(
         path: '/view-profile',

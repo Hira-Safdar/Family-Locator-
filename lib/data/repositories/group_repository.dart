@@ -284,6 +284,40 @@ class GroupRepository {
     }
   }
 
+  Future<void> renameGroup({
+    required String groupId,
+    required String name,
+  }) async {
+    try {
+      final me = _authService.currentUserId;
+      if (me == null) {
+        throw const AuthFailure('You need to be signed in.');
+      }
+      final trimmed = name.trim();
+      if (trimmed.isEmpty) {
+        throw const FirestoreFailure('Group name cannot be empty.');
+      }
+      final data = await _firestore.getDoc('groups/$groupId');
+      if (data == null) {
+        throw const FirestoreFailure('This group no longer exists.');
+      }
+      if (data['ownerId'] != me) {
+        throw const FirestoreFailure(
+          'Only the group owner can rename this group.',
+        );
+      }
+      await _firestore.updateDoc('groups/$groupId', {'name': trimmed});
+    } on FirebaseException catch (e) {
+      throw FirestoreFailure(_firestoreMessage(e));
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Could not rename the group. Please check your internet connection and try again.',
+      );
+    }
+  }
+
   Future<void> removeMember({
     required String groupId,
     required String uid,

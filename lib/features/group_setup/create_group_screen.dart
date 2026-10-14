@@ -141,8 +141,16 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
       }
 
       final controller = ref.read(groupControllerProvider.notifier);
-      await controller.createGroup(name: name, category: widget.category);
-      if (mounted) context.go('/home');
+      final group = await controller.createGroup(
+        name: name,
+        category: widget.category,
+      );
+      if (mounted) {
+        context.go(
+          '/invite?code=${group.inviteCode}'
+          '&name=${Uri.encodeComponent(group.name)}',
+        );
+      }
     } on Failure catch (e) {
       if (!mounted) return;
       setState(() {

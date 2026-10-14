@@ -1,21 +1,70 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/group_categories.dart';
 import '../../core/errors/failure.dart';
+import '../../core/utils/invite_share.dart';
 import '../../data/models/group_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
 import '../../shared_widgets/error_view.dart';
 import '../../shared_widgets/loading_indicator.dart';
 
-class GroupsScreen extends ConsumerWidget {
+enum _GroupSort { newest, name, members }
+
+class GroupsScreen extends ConsumerStatefulWidget {
   const GroupsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GroupsScreen> createState() => _GroupsScreenState();
+}
+
+class _GroupsScreenState extends ConsumerState<GroupsScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+  String? _category;
+  _GroupSort _sort = _GroupSort.newest;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<GroupModel> _apply(List<GroupModel> groups) {
+    final query = _query.trim().toLowerCase();
+    final list = groups.where((group) {
+      if (_category != null && group.category != _category) return false;
+      if (query.isEmpty) return true;
+      return group.name.toLowerCase().contains(query) ||
+          group.inviteCode.toLowerCase().contains(query);
+    }).toList();
+
+    switch (_sort) {
+      case _GroupSort.name:
+        list.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
+      case _GroupSort.members:
+        list.sort((a, b) => b.memberIds.length.compareTo(a.memberIds.length));
+      case _GroupSort.newest:
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return list;
+  }
+
+  Future<void> _refresh() async {
+    ref.invalidate(myGroupsStreamProvider);
+    try {
+      await ref.read(myGroupsStreamProvider.future);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final groups = ref.watch(myGroupsStreamProvider);
 
     return Scaffold(
@@ -55,6 +104,70 @@ class GroupsScreen extends ConsumerWidget {
               label: const Text('Join a Group'),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: TextField(
+              controller: _searchController,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: 'Search by name or code',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
+                isDense: true,
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      _categoryChip('All', _category == null, () {
+                        setState(() => _category = null);
+                      }),
+                      for (final category in GroupCategories.all)
+                        _categoryChip(category, _category == category, () {
+                          setState(() => _category = category);
+                        }),
+                    ],
+                  ),
+                ),
+              ),
+              PopupMenuButton<_GroupSort>(
+                icon: const Icon(Icons.sort),
+                tooltip: 'Sort',
+                initialValue: _sort,
+                onSelected: (value) => setState(() => _sort = value),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: _GroupSort.newest,
+                    child: Text('Newest first'),
+                  ),
+                  PopupMenuItem(
+                    value: _GroupSort.name,
+                    child: Text('Name (A-Z)'),
+                  ),
+                  PopupMenuItem(
+                    value: _GroupSort.members,
+                    child: Text('Most members'),
+                  ),
+                ],
+              ),
+            ],
+          ),
           Expanded(
             child: groups.when(
               loading: () => LoadingIndicator(
@@ -66,16 +179,53 @@ class GroupsScreen extends ConsumerWidget {
                     : 'Something went wrong loading your groups. Please check your internet connection and try again.',
                 onRetry: () => ref.invalidate(myGroupsStreamProvider),
               ),
-              data: (list) => list.isEmpty
-                  ? const _EmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.only(top: 8, bottom: 24),
-                      itemCount: list.length,
-                      itemBuilder: (context, i) => _GroupCard(group: list[i]),
-                    ),
+              data: (all) {
+                final list = _apply(all);
+                return RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: all.isEmpty
+                      ? const _ScrollableMessage(child: _EmptyState())
+                      : list.isEmpty
+                      ? const _ScrollableMessage(child: _NoMatches())
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(top: 8, bottom: 24),
+                          itemCount: list.length,
+                          itemBuilder: (context, i) =>
+                              _GroupCard(group: list[i]),
+                        ),
+                );
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _categoryChip(String label, bool selected, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => onTap(),
+      ),
+    );
+  }
+}
+
+class _ScrollableMessage extends StatelessWidget {
+  const _ScrollableMessage({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(height: constraints.maxHeight, child: child),
       ),
     );
   }
@@ -117,23 +267,54 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _GroupCard extends StatelessWidget {
+class _NoMatches extends StatelessWidget {
+  const _NoMatches();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.search_off, size: 72, color: AppColors.textLight),
+            const SizedBox(height: 16),
+            Text(
+              'No matching groups',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try a different search or category filter.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GroupCard extends ConsumerWidget {
   const _GroupCard({required this.group});
 
   final GroupModel group;
 
-  void _copyCode(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: group.inviteCode));
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(content: Text('Invite code ${group.inviteCode} copied')),
-      );
+  Future<void> _showRename(BuildContext context, WidgetRef ref) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _RenameGroupDialog(group: group),
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final members = group.memberIds.length;
+    final isOwner = ref.watch(authStateProvider).value == group.ownerId;
 
     return GestureDetector(
       onTap: () => context.push('/members?groupId=${group.id}'),
@@ -181,21 +362,25 @@ class _GroupCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
+                      if (isOwner)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Owner',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          group.category,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -211,11 +396,27 @@ class _GroupCard extends StatelessWidget {
                         '$members member${members == 1 ? '' : 's'}',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          group.category,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   InkWell(
-                    onTap: () => _copyCode(context),
+                    onTap: () => copyInviteCode(context, group.inviteCode),
                     borderRadius: BorderRadius.circular(6),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -238,11 +439,26 @@ class _GroupCard extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              tooltip: 'Show QR',
-              icon: const Icon(Icons.qr_code_2),
-              color: AppColors.textLight,
-              onPressed: () => _showQr(context),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  _showRename(context, ref);
+                } else if (value == 'share') {
+                  shareInvite(
+                    groupName: group.name,
+                    inviteCode: group.inviteCode,
+                  );
+                } else if (value == 'qr') {
+                  _showQr(context);
+                }
+              },
+              itemBuilder: (context) => [
+                if (isOwner)
+                  const PopupMenuItem(value: 'edit', child: Text('Edit name')),
+                const PopupMenuItem(value: 'share', child: Text('Share invite')),
+                const PopupMenuItem(value: 'qr', child: Text('Show QR')),
+              ],
             ),
           ],
         ),
@@ -315,6 +531,108 @@ class _GroupCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RenameGroupDialog extends ConsumerStatefulWidget {
+  const _RenameGroupDialog({required this.group});
+
+  final GroupModel group;
+
+  @override
+  ConsumerState<_RenameGroupDialog> createState() => _RenameGroupDialogState();
+}
+
+class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.group.name,
+  );
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _controller.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Group name cannot be empty');
+      return;
+    }
+    if (name == widget.group.name) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(groupControllerProvider.notifier).renameGroup(
+            groupId: widget.group.id,
+            name: name,
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e is Failure ? e.message : 'Could not rename the group.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit group name'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _controller,
+            enabled: !_busy,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(labelText: 'Group name'),
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+            onSubmitted: (_) => _save(),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _busy ? null : _save,
+          child: _busy
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
     );
   }
 }
