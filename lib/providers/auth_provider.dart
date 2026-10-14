@@ -4,10 +4,15 @@ import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/services/firebase_auth_services.dart';
 import '../data/services/firestore_services.dart';
+import '../data/services/messaging_service.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(FirebaseAuthServices(), FirestoreServices());
 });
+
+final messagingServiceProvider = Provider<MessagingService>(
+  (ref) => MessagingService(),
+);
 
 final authStateProvider = StreamProvider<String?>((ref) {
   final repo = ref.watch(authRepositoryProvider);

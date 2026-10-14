@@ -118,6 +118,10 @@ class AuthRepository {
     }
   }
 
+  Future<void> saveFcmToken(String uid, String token) async {
+    await _firestore.setDoc('users/$uid', {'fcmToken': token}, merge: true);
+  }
+
   Future<void> deleteAccount() async {
     final uid = _authService.currentUserId;
     if (uid == null) {
