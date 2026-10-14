@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/errors/failure.dart';
 import '../data/models/location_point.dart';
 import '../data/repositories/location_repository.dart';
+import '../data/services/background_service.dart';
 import '../data/services/firebase_auth_services.dart';
 import '../data/services/firestore_services.dart';
 import '../data/services/location_service.dart';
@@ -56,8 +57,10 @@ class LocationController extends AsyncNotifier<void> {
       return;
     }
     final seconds = ref.read(settingsProvider).refreshSeconds;
+    final uid = ref.read(authStateProvider).value;
     await services.ensureNotificationPermission();
-    await services.startTracking(_handlePoint, seconds: seconds);
+    await services.ensureBackgroundAccess();
+    await BackgroundTracking.start(uid: uid, seconds: seconds);
     ref.read(isSharingProvider.notifier).on();
     state = const AsyncData(null);
   }
@@ -69,6 +72,8 @@ class LocationController extends AsyncNotifier<void> {
 
   Future<void> restart() async {
     if (!ref.read(isSharingProvider)) return;
+    await BackgroundTracking.stop();
+    await Future<void>.delayed(const Duration(milliseconds: 600));
     await start();
   }
 
@@ -76,7 +81,7 @@ class LocationController extends AsyncNotifier<void> {
     try {
       await ref.read(locationRepositoryProvider).setSharingPaused(true);
     } finally {
-      await ref.read(locationServicesProvider).stopTracking();
+      await BackgroundTracking.stop();
       ref.read(isSharingProvider.notifier).off();
       state = const AsyncData(null);
     }
@@ -85,10 +90,6 @@ class LocationController extends AsyncNotifier<void> {
   Future<void> clearHistory() async {
     await ref.read(locationRepositoryProvider).clearHistory();
     ref.invalidate(myLocationProvider);
-  }
-
-  void _handlePoint(LocationPoint point) {
-    ref.read(locationRepositoryProvider).saveLatest(point).catchError((_) {});
   }
 }
 

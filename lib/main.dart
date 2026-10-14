@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
+import 'data/services/background_service.dart';
 import 'data/services/notification_service.dart';
 import 'providers/notification_provider.dart';
 import 'providers/settings_provider.dart';
@@ -12,12 +12,10 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.android,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
+  await initializeBackgroundService();
   final prefs = await SharedPreferences.getInstance();
   final notifications = NotificationService();
   await notifications.init();
@@ -32,7 +30,6 @@ Future<void> main() async {
     ),
   );
 }
-
 
 class FamilyApp extends ConsumerWidget {
   const FamilyApp({super.key});

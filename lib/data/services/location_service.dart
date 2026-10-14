@@ -32,6 +32,16 @@ class LocationServices {
     }
   }
 
+  Future<void> ensureBackgroundAccess() async {
+    final always = await Permission.locationAlways.status;
+    if (!always.isGranted) {
+      await Permission.locationAlways.request();
+    }
+    if (!await Permission.ignoreBatteryOptimizations.isGranted) {
+      await Permission.ignoreBatteryOptimizations.request();
+    }
+  }
+
   Future<LocationPoint> currentPoint() async {
     final position = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
