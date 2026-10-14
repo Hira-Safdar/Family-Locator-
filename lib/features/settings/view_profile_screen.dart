@@ -19,11 +19,13 @@ class ViewProfileScreen extends ConsumerStatefulWidget {
 
 class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
   bool _editing = false;
   bool _locked = false;
   bool _showNameError = false;
+  bool _removePhoto = false;
   String? _error;
   String? _pickedPath;
   String? _photoUrl;
@@ -31,14 +33,17 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  void _startEdit(String? currentName, String? currentPhotoUrl) {
+  void _startEdit(String? currentName, String? currentPhotoUrl, String? phone) {
     setState(() {
       _nameController.text = currentName ?? '';
+      _phoneController.text = phone ?? '';
       _photoUrl = currentPhotoUrl;
       _pickedPath = null;
+      _removePhoto = false;
       _error = null;
       _showNameError = false;
       _editing = true;
@@ -50,6 +55,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
       _editing = false;
       _locked = false;
       _pickedPath = null;
+      _removePhoto = false;
       _error = null;
       _showNameError = false;
     });
@@ -84,7 +90,10 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
       imageQuality: 70,
     );
     if (file == null || !mounted) return;
-    setState(() => _pickedPath = file.path);
+    setState(() {
+      _pickedPath = file.path;
+      _removePhoto = false;
+    });
   }
 
   Future<void> _save() async {
@@ -102,6 +111,8 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
       await ref.read(authControllerProvider.notifier).updateProfile(
             name: name,
             photoFilePath: _pickedPath,
+            phone: _phoneController.text.trim(),
+            removePhoto: _removePhoto,
           );
       ref.invalidate(userProfileProvider);
       ref.invalidate(userDocProvider);
@@ -111,6 +122,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
         _locked = false;
         _editing = false;
         _pickedPath = null;
+        _removePhoto = false;
       });
     } catch (e) {
       if (!mounted) return;
@@ -147,7 +159,14 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
               data: (profile) {
                 final name = profile?.name ?? '';
                 final email = profile?.email ?? '';
-                return _viewBody(theme, profile?.photoUrl, name, email);
+                final phone = profile?.phone ?? '';
+                return _viewBody(
+                  theme,
+                  profile?.photoUrl,
+                  name,
+                  email,
+                  phone,
+                );
               },
             ),
     );
@@ -158,6 +177,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
     String? photoUrl,
     String name,
     String email,
+    String phone,
   ) {
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -183,10 +203,31 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
             ),
           ),
         ],
+        if (phone.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.phone_outlined,
+                  size: 16,
+                  color: AppColors.textLight,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  phone,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: AppColors.textLight),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 32),
         CustomButton(
           label: 'Edit Profile',
-          onPressed: () => _startEdit(name, photoUrl),
+          onPressed: () => _startEdit(name, photoUrl, phone),
         ),
       ],
     );
@@ -199,7 +240,26 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
       children: [
         const SizedBox(height: 8),
         Center(child: _editAvatar()),
-        const SizedBox(height: 32),
+        if (!_removePhoto &&
+            (_pickedPath != null || (_photoUrl?.isNotEmpty ?? false))) ...[
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton.icon(
+              onPressed: _locked
+                  ? null
+                  : () => setState(() {
+                      _removePhoto = true;
+                      _pickedPath = null;
+                    }),
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              label: const Text(
+                'Remove photo',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
         TextField(
           controller: _nameController,
           enabled: !_locked,
@@ -210,6 +270,17 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
             counterText: '',
             errorText:
                 _showNameError && name.isEmpty ? 'Enter your name' : null,
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _phoneController,
+          enabled: !_locked,
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.done,
+          decoration: const InputDecoration(
+            labelText: 'Phone (optional)',
+            prefixIcon: Icon(Icons.phone_outlined),
           ),
         ),
         if (_error != null) ...[
@@ -247,7 +318,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
         else
           ProfileAvatar(
             name: _nameController.text.trim(),
-            photoUrl: _photoUrl,
+            photoUrl: _removePhoto ? null : _photoUrl,
             radius: 48,
           ),
         Positioned(

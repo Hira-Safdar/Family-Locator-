@@ -186,6 +186,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
+            leading: const Icon(Icons.email_outlined),
+            title: const Text('Change Email'),
+            subtitle: const Text('Update your account email'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/change-email'),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
             leading: const Icon(Icons.password_outlined),
             title: const Text('Change Password'),
             subtitle: const Text('Update your account password'),

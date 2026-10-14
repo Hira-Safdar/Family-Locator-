@@ -48,6 +48,10 @@ class FirebaseAuthServices {
     await _auth.currentUser?.delete();
   }
 
+  Future<void> verifyBeforeUpdateEmail(String email) async {
+    await _auth.currentUser?.verifyBeforeUpdateEmail(email.trim());
+  }
+
   Future<void> sendPasswordResetEmail(String email) async {
     await _auth.sendPasswordResetEmail(email: email.trim());
   }

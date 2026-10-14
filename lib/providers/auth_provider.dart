@@ -77,12 +77,37 @@ class AuthController extends AsyncNotifier<void> {
     }
   }
 
-  Future<void> updateProfile({String? name, String? photoFilePath}) async {
+  Future<void> updateProfile({
+    String? name,
+    String? photoFilePath,
+    String? phone,
+    bool removePhoto = false,
+  }) async {
     state = const AsyncLoading();
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .updateProfile(name: name, photoFilePath: photoFilePath);
+      await ref.read(authRepositoryProvider).updateProfile(
+            name: name,
+            photoFilePath: photoFilePath,
+            phone: phone,
+            removePhoto: removePhoto,
+          );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> changeEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await ref.read(authRepositoryProvider).changeEmail(
+            currentPassword: currentPassword,
+            newEmail: newEmail,
+          );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

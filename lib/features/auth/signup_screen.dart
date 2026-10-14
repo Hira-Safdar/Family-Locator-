@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/errors/failure.dart';
+import '../../core/utils/password_validator.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared_widgets/custom_button.dart';
 
@@ -34,16 +35,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return valid ? null : 'Enter a valid email';
   }
 
-  String? _validatePassword(String password) {
-    if (password.length < 12) return 'Password must be at least 12 characters';
-    final hasUpper = password.contains(RegExp(r'[A-Z]'));
-    final hasDigit = password.contains(RegExp(r'[0-9]'));
-    final hasSpecial = password.contains(RegExp(r'[@#\$&]'));
-    if (!hasUpper || !hasDigit || !hasSpecial) {
-      return 'Use a capital letter, a number and a special symbol (@#\$&)';
-    }
-    return null;
-  }
+  String? _validatePassword(String password) =>
+      PasswordValidator.validate(password);
 
   Future<void> _submit() async {
     final name = _nameController.text.trim();

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
+import '../../core/utils/password_validator.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared_widgets/custom_button.dart';
 
@@ -41,9 +42,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     final confirm = _confirmController.text;
 
     final currentError = current.isEmpty ? 'Enter your current password' : null;
-    final newError = next.length < 12
-        ? 'Password must be at least 12 characters'
-        : null;
+    final newError = PasswordValidator.validate(next);
     final confirmError = confirm != next ? 'Passwords do not match' : null;
 
     if (currentError != null || newError != null || confirmError != null) {

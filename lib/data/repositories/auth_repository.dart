@@ -65,28 +65,74 @@ class AuthRepository {
 
   Future<void> signOut() => _authService.signOut();
 
-  Future<void> updateProfile({String? name, String? photoFilePath}) async {
+  Future<void> updateProfile({
+    String? name,
+    String? photoFilePath,
+    String? phone,
+    bool removePhoto = false,
+  }) async {
     final uid = _authService.currentUserId;
     if (uid == null) {
       throw const AuthFailure('No signed-in account found.');
     }
 
     final cleanName = name?.trim();
+    final cleanPhone = phone?.trim();
     String? photoData;
     if (photoFilePath != null && photoFilePath.isNotEmpty) {
       final bytes = await File(photoFilePath).readAsBytes();
       photoData = 'data:image/jpeg;base64,${base64Encode(bytes)}';
     }
 
-    final data = <String, dynamic>{
-      if (cleanName != null && cleanName.isNotEmpty) 'name': cleanName,
-      'photoUrl': ?photoData,
-    };
+    final data = <String, dynamic>{};
+    if (cleanName != null && cleanName.isNotEmpty) data['name'] = cleanName;
+    if (cleanPhone != null) data['phone'] = cleanPhone;
+    if (removePhoto) {
+      data['photoUrl'] = '';
+    } else if (photoData != null) {
+      data['photoUrl'] = photoData;
+    }
     if (data.isNotEmpty) {
       await _firestore.updateDoc('users/$uid', data);
     }
     if (cleanName != null && cleanName.isNotEmpty) {
       await _authService.updateDisplayName(cleanName);
+    }
+  }
+
+  Future<void> changeEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async {
+    final uid = _authService.currentUserId;
+    if (uid == null) {
+      throw const AuthFailure('No signed-in account found.');
+    }
+    final current = _authService.currentUserEmail;
+    if (current == null || current.isEmpty) {
+      throw const AuthFailure('This account has no email address.');
+    }
+    final email = newEmail.trim();
+    if (email.isEmpty) {
+      throw const AuthFailure('Enter a valid email address.');
+    }
+    try {
+      await _authService.reauthenticate(
+        email: current,
+        password: currentPassword,
+      );
+      await _authService.verifyBeforeUpdateEmail(email);
+    } on fb.FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        throw const AuthFailure('Your current password is incorrect.');
+      }
+      throw _mapAuthError(e);
+    } on Failure {
+      rethrow;
+    } catch (_) {
+      throw const NetworkFailure(
+        'Check your internet connection and try again.',
+      );
     }
   }
 
@@ -205,6 +251,7 @@ class AuthRepository {
       name: (data['name'] as String?) ?? 'Member',
       email: (data['email'] as String?) ?? '',
       photoUrl: data['photoUrl'] as String?,
+      phone: data['phone'] as String?,
     );
   }
 

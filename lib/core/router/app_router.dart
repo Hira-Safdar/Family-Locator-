@@ -13,6 +13,7 @@ import '../../features/group_setup/invite_screen.dart';
 import '../../features/group_setup/join_group_screen.dart';
 import '../../features/settings/alert_map_screen.dart';
 import '../../features/settings/alerts_screen.dart';
+import '../../features/settings/change_email_screen.dart';
 import '../../features/settings/change_password_screen.dart';
 import '../../features/settings/members_screen.dart';
 import '../../features/settings/privacy_controls_screen.dart';
@@ -118,6 +119,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/change-password',
         builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/change-email',
+        builder: (context, state) => const ChangeEmailScreen(),
       ),
     ],
   );
