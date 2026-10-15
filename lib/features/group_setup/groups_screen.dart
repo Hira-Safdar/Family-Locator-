@@ -73,39 +73,41 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
                 backgroundColor: context.palette.primary,
                 foregroundColor: context.palette.onPrimary,
-                minimumSize: const Size.fromHeight(52),
+                minimumSize: const Size.fromHeight(44),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: () => context.push('/choose-group'),
-              icon: const Icon(Icons.add_circle_outline),
+              icon: const Icon(Icons.add_circle_outline, size: 18),
               label: const Text('Create Group'),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                side: BorderSide(color: context.palette.primary, width: 1.4),
+                minimumSize: const Size.fromHeight(44),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                side: BorderSide(color: context.palette.primary, width: 1.2),
                 foregroundColor: context.palette.primary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: () => context.push('/join-group'),
-              icon: const Icon(Icons.login),
+              icon: const Icon(Icons.login, size: 18),
               label: const Text('Join a Group'),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
             child: TextField(
               controller: _searchController,
               textInputAction: TextInputAction.search,
@@ -130,7 +132,7 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 40,
+                  height: 34,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -189,7 +191,7 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                       ? const _ScrollableMessage(child: _NoMatches())
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.only(top: 8, bottom: 24),
+                          padding: const EdgeInsets.only(top: 4, bottom: 20),
                           itemCount: list.length,
                           itemBuilder: (context, i) =>
                               _GroupCard(group: list[i]),
@@ -244,10 +246,10 @@ class _EmptyState extends StatelessWidget {
           children: [
             Icon(
               Icons.groups_outlined,
-              size: 80,
+              size: 60,
               color: context.palette.textLight,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'No groups yet',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -278,8 +280,8 @@ class _NoMatches extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off, size: 72, color: context.palette.textLight),
-            const SizedBox(height: 16),
+            Icon(Icons.search_off, size: 54, color: context.palette.textLight),
+            const SizedBox(height: 12),
             Text(
               'No matching groups',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -319,8 +321,8 @@ class _GroupCard extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.push('/members?groupId=${group.id}'),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
           color: context.palette.surface,
           borderRadius: BorderRadius.circular(16),
@@ -335,18 +337,18 @@ class _GroupCard extends ConsumerWidget {
         child: Row(
           children: [
             CircleAvatar(
-              radius: 24,
+              radius: 19,
               backgroundColor: context.palette.background,
               child: Text(
                 group.name.isEmpty ? '?' : group.name[0].toUpperCase(),
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: context.palette.textDark,
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 11),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,24 +385,24 @@ class _GroupCard extends ConsumerWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Row(
                     children: [
                       Icon(
                         Icons.group_outlined,
-                        size: 15,
+                        size: 13,
                         color: context.palette.textLight,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 3),
                       Text(
                         '$members member${members == 1 ? '' : 's'}',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
+                          horizontal: 7,
+                          vertical: 1,
                         ),
                         decoration: BoxDecoration(
                           color: context.palette.background,
@@ -414,14 +416,14 @@ class _GroupCard extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   InkWell(
                     onTap: () => copyInviteCode(context, group.inviteCode),
                     borderRadius: BorderRadius.circular(6),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: 8,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: context.palette.background,
@@ -430,7 +432,7 @@ class _GroupCard extends ConsumerWidget {
                       child: Text(
                         group.inviteCode,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          letterSpacing: 3,
+                          letterSpacing: 2,
                           color: context.palette.primary,
                         ),
                       ),
@@ -440,7 +442,7 @@ class _GroupCard extends ConsumerWidget {
               ),
             ),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
+              icon: const Icon(Icons.more_vert, size: 20),
               onSelected: (value) {
                 if (value == 'edit') {
                   _showRename(context, ref);
