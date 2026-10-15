@@ -4,7 +4,6 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
@@ -36,11 +35,7 @@ Future<void> initializeBackgroundService() async {
       foregroundServiceNotificationId: locationSharingNotificationId,
       foregroundServiceTypes: const [AndroidForegroundType.location],
     ),
-    iosConfiguration: IosConfiguration(
-      autoStart: false,
-      onForeground: backgroundServiceEntry,
-      onBackground: backgroundServiceOnBackground,
-    ),
+    iosConfiguration: IosConfiguration(autoStart: false),
   );
 }
 
@@ -104,10 +99,6 @@ Future<void> backgroundServiceEntry(ServiceInstance service) async {
   await _startTracking();
 }
 
-Future<bool> backgroundServiceOnBackground(ServiceInstance service) async {
-  return true;
-}
-
 Future<User?> _waitForUser() async {
   final auth = FirebaseAuth.instance;
   if (auth.currentUser != null) return auth.currentUser;
@@ -122,15 +113,6 @@ Future<User?> _waitForUser() async {
 }
 
 LocationSettings _settings(int seconds, int minMeters) {
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
-    return AppleSettings(
-      accuracy: LocationAccuracy.high,
-      activityType: ActivityType.other,
-      distanceFilter: minMeters,
-      pauseLocationUpdatesAutomatically: false,
-      allowBackgroundLocationUpdates: true,
-    );
-  }
   return AndroidSettings(
     accuracy: LocationAccuracy.high,
     distanceFilter: minMeters,

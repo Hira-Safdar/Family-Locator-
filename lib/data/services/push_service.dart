@@ -61,11 +61,6 @@ class PushService {
             'priority': 'high',
             'notification': {'channel_id': 'sos_alerts'},
           },
-          'apns': {
-            'payload': {
-              'aps': {'sound': 'default'},
-            },
-          },
         },
       }),
     );
