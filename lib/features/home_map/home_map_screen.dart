@@ -34,7 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _centered = false;
   String? _selectedUid;
   LocationPoint? _selectedPoint;
-  String? _notifiedSosKey;
+  final Set<String> _notifiedSos = {};
 
   @override
   void initState() {
@@ -93,16 +93,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     ref.listen(myGroupsStreamProvider, (previous, next) {
       final nextGroups = next.value ?? const <GroupModel>[];
-      if (nextGroups.isEmpty) {
-        _notifiedSosKey = null;
-        return;
+      for (final group in nextGroups) {
+        _notifySosIfNeeded(group, selfUid);
       }
-      final id = ref.read(selectedGroupIdProvider);
-      final active = nextGroups.firstWhere(
-        (g) => g.id == id,
-        orElse: () => nextGroups.first,
-      );
-      _notifySosIfNeeded(active, selfUid);
     });
 
     GroupModel? activeGroup;
@@ -414,18 +407,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _notifySosIfNeeded(GroupModel? group, String? selfUid) {
-    final sos = group?.sos;
-    if (group == null || sos == null) {
-      _notifiedSosKey = null;
-      return;
-    }
+  void _notifySosIfNeeded(GroupModel group, String? selfUid) {
+    final sos = group.sos;
+    if (sos == null) return;
     if (sos.uid == selfUid) return;
     final key =
         '${group.id}:${sos.uid}:${sos.createdAt.millisecondsSinceEpoch}';
-    if (_notifiedSosKey == key) return;
+    if (_notifiedSos.contains(key)) return;
     if (!ref.read(settingsProvider).notificationsEnabled) return;
-    _notifiedSosKey = key;
+    _notifiedSos.add(key);
     ref
         .read(notificationServiceProvider)
         .showSos(senderName: sos.name, groupName: group.name);
