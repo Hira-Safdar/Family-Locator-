@@ -49,6 +49,7 @@ dependencies:
   flutter_background_service: ^5.1.0
   battery_plus: ^7.1.2
   package_info_plus: ^10.2.2
+  google_mobile_ads: ^9.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

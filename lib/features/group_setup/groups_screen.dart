@@ -10,6 +10,7 @@ import '../../core/utils/invite_share.dart';
 import '../../data/models/group_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
+import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/error_view.dart';
 import '../../shared_widgets/loading_indicator.dart';
 
@@ -106,6 +107,9 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
               label: const Text('Join a Group'),
             ),
           ),
+          const SizedBox(height: 4),
+          const BannerAdWidget(),
+          const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
             child: TextField(

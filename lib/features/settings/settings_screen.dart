@@ -12,6 +12,7 @@ import '../../core/errors/failure.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/profile_avatar.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -378,6 +379,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               label: const Text('Logout'),
             ),
           ),
+          const SizedBox(height: 16),
+          const BannerAdWidget(),
           const SizedBox(height: 24),
         ],
       ),
