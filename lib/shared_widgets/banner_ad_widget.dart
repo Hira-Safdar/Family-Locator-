@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class BannerAdWidget extends StatefulWidget {
-  const BannerAdWidget({super.key});
+  const BannerAdWidget({super.key, required this.adUnitId});
+
+  final String adUnitId;
 
   @override
   State<BannerAdWidget> createState() => _BannerAdWidgetState();
@@ -22,6 +24,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   }
 
   Future<void> _loadAd() async {
+    if (widget.adUnitId.isEmpty) return;
     final width = MediaQuery.sizeOf(context).width.truncate();
     final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSizeWithOrientation(
       Orientation.portrait,
@@ -30,7 +33,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     if (size == null || !mounted) return;
     _bannerAd = BannerAd(
       size: size,
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111',
+      adUnitId: widget.adUnitId,
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           if (mounted) setState(() => _loaded = true);

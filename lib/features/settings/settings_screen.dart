@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_config.dart';
 import '../../core/errors/failure.dart';
@@ -380,7 +381,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             ),
           ),
           const SizedBox(height: 16),
-          const BannerAdWidget(),
+          const BannerAdWidget(adUnitId: AdUnits.settingsBanner),
           const SizedBox(height: 24),
         ],
       ),
