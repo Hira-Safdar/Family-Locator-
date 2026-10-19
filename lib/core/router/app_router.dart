@@ -20,15 +20,17 @@ import '../../features/settings/privacy_controls_screen.dart';
 import '../../features/settings/view_profile_screen.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/splash/splash_screen.dart';
+import '../../providers/app_startup_provider.dart';
 import '../../providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
+  final splashHold = ref.watch(minimumSplashProvider);
 
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
-      if (authState.isLoading) return null;
+      if (authState.isLoading || splashHold.isLoading) return null;
 
       final loggedIn = authState.asData?.value != null;
 
