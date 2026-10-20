@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/constants/group_categories.dart';
@@ -8,7 +6,6 @@ import '../../core/utils/code_generator.dart';
 import '../models/group_model.dart';
 import '../services/firebase_auth_services.dart';
 import '../services/firestore_services.dart';
-import '../services/push_service.dart';
 
 class GroupRepository {
   GroupRepository(this._firestore, this._authService);
@@ -206,7 +203,6 @@ class GroupRepository {
         'createdAt': DateTime.now().toIso8601String(),
         'resolvedAt': null,
       });
-      unawaited(_pushSos(groupId: groupId, senderUid: uid));
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
     } on Failure {
@@ -216,37 +212,6 @@ class GroupRepository {
         'Could not send SOS. Please check your internet connection and try again.',
       );
     }
-  }
-
-  Future<void> _pushSos({
-    required String groupId,
-    required String senderUid,
-  }) async {
-    try {
-      final group = await _firestore.getDoc('groups/$groupId');
-      if (group == null) return;
-      final members = List<String>.from(
-        group['memberIds'] as List? ?? const [],
-      );
-      final groupName = group['name'] as String? ?? 'your group';
-      final senderName = _authService.currentUserName ?? 'A member';
-
-      final tokens = <String>[];
-      for (final member in members) {
-        if (member == senderUid) continue;
-        final user = await _firestore.getDoc('users/$member');
-        final token = user?['fcmToken'] as String?;
-        if (token != null && token.isNotEmpty) tokens.add(token);
-      }
-
-      await PushService().sendSos(
-        tokens: tokens,
-        senderName: senderName,
-        senderUid: senderUid,
-        groupId: groupId,
-        groupName: groupName,
-      );
-    } catch (_) {}
   }
 
   Future<void> resolveSos(String groupId) async {

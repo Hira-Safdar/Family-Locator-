@@ -9,8 +9,4 @@ abstract final class AppConfig {
   static const String feedbackEmail = '';
   static const String termsUrl = '';
   static const String privacyPolicyUrl = '';
-  static const String fcmProjectId = 'family-locator-4551f';
-  static const String fcmServiceAccountB64 = String.fromEnvironment(
-    'FCM_SA_B64',
-  );
 }
