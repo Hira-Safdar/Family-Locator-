@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../group_setup/groups_screen.dart';
 import '../home_map/home_map_screen.dart';
 import '../settings/settings_screen.dart';
@@ -19,14 +22,36 @@ class HomeShell extends ConsumerStatefulWidget {
 
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
+  String _campaignTitle = '';
+  String _campaignBody = '';
   StreamSubscription<String>? _tokenSub;
   StreamSubscription<RemoteMessage>? _tapSub;
+  StreamSubscription<RemoteMessage>? _messageSub;
 
   @override
   void initState() {
     super.initState();
     _registerPushToken();
     _listenNotificationTaps();
+    _listenCampaigns();
+  }
+
+  void _listenCampaigns() {
+    _messageSub = FirebaseMessaging.onMessage.listen((message) {
+      if (message.data['type'] != 'campaign') return;
+      if (!ref.read(settingsProvider).notificationsEnabled) return;
+      final title = message.notification?.title ?? '';
+      final body = message.notification?.body ?? '';
+      if (title.isEmpty && body.isEmpty) return;
+      ref
+          .read(notificationServiceProvider)
+          .showCampaign(title: title, body: body);
+      if (!mounted) return;
+      setState(() {
+        _campaignTitle = title;
+        _campaignBody = body;
+      });
+    });
   }
 
   void _listenNotificationTaps() {
@@ -78,19 +103,81 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     } catch (_) {}
   }
 
+  Widget _campaignBanner() {
+    final palette = context.palette;
+    return Material(
+      color: palette.surface,
+      elevation: 6,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.campaign_outlined, color: palette.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _campaignTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (_campaignBody.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _campaignBody,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: () => setState(() {
+                _campaignTitle = '';
+                _campaignBody = '';
+              }),
+              icon: const Icon(Icons.close),
+              iconSize: 20,
+              tooltip: 'Dismiss',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _tokenSub?.cancel();
     _tapSub?.cancel();
+    _messageSub?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: const [HomeScreen(), GroupsScreen(), SettingsScreen()],
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _index,
+            children: const [HomeScreen(), GroupsScreen(), SettingsScreen()],
+          ),
+          if (_campaignTitle.isNotEmpty)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: _campaignBanner(),
+            ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,

@@ -9,6 +9,11 @@ class NotificationService {
   static const String _channelDescription =
       'Emergency alerts from your group members.';
 
+  static const String _campaignChannelId = 'campaigns';
+  static const String _campaignChannelName = 'Campaigns';
+  static const String _campaignChannelDescription =
+      'News, tips and announcements from Family Locator.';
+
   bool _ready = false;
 
   Future<void> init() async {
@@ -17,18 +22,26 @@ class NotificationService {
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
     await _plugin.initialize(settings: settings);
-    await _plugin
+    final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(
-          const AndroidNotificationChannel(
-            _channelId,
-            _channelName,
-            description: _channelDescription,
-            importance: Importance.max,
-          ),
-        );
+        >();
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _channelId,
+        _channelName,
+        description: _channelDescription,
+        importance: Importance.max,
+      ),
+    );
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _campaignChannelId,
+        _campaignChannelName,
+        description: _campaignChannelDescription,
+        importance: Importance.high,
+      ),
+    );
     _ready = true;
   }
 
@@ -60,6 +73,29 @@ class NotificationService {
       body: '$senderName needs help in $groupName.',
       notificationDetails: details,
       payload: 'sos',
+    );
+  }
+
+  Future<void> showCampaign({
+    required String title,
+    required String body,
+  }) async {
+    await init();
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        _campaignChannelId,
+        _campaignChannelName,
+        channelDescription: _campaignChannelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+    );
+    await _plugin.show(
+      id: 2,
+      title: title,
+      body: body,
+      notificationDetails: details,
+      payload: 'campaign',
     );
   }
 }

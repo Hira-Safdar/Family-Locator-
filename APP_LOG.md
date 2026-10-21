@@ -41,9 +41,7 @@
 - `url_launcher` ^6.3.3 — external links
 - `shared_preferences` ^2.5.6 — local settings
 - `image_picker` ^1.2.4 — profile photo
-- `flutter_local_notifications` ^22.3.1 — local SOS notification
-- `http` ^1.6.0 — (purane push code se bacha hua, ab use nahi hota)
-- `googleapis_auth` ^2.3.4 — (purane push code se bacha hua, ab use nahi hota)
+- `flutter_local_notifications` ^22.3.1 — local SOS + campaign notifications
 - `flutter_background_service` ^5.1.0 — background location
 - `battery_plus` ^7.1.2 — battery level
 - `package_info_plus` ^10.2.2 — app version
@@ -64,7 +62,7 @@
 3. `initializeBackgroundService()` — background service + `location_sharing` channel configure
 4. `MobileAds.instance.initialize()`
 5. `SharedPreferences.getInstance()`
-6. `NotificationService().init()` — `sos_alerts` channel create
+6. `NotificationService().init()` — `sos_alerts` + `campaigns` channels create
 7. `notifications.requestPermission()` — Android 13+ notification permission
 8. `runApp(ProviderScope(...))` with overrides:
    - `sharedPreferencesProvider`
@@ -130,12 +128,14 @@
 - `_index` state — selected tab.
 
 Functions:
-- `initState()` → `_registerPushToken()` + `_listenNotificationTaps()`
+- `initState()` → `_registerPushToken()` + `_listenNotificationTaps()` + `_listenCampaigns()`
 - `_registerPushToken()` → `MessagingService.register()` → `saveFcmToken(uid, token)`; `onTokenRefresh` subscribe
 - `_listenNotificationTaps()` → `onMessageOpenedApp` subscribe + `getInitialMessage()` check
-- `_openNotification(message)` → `type == "sos"` par `latitude`/`longitude` se `/alert-map?lat=&lng=&name=` push (missing coords → `/alerts`)
-- `dispose()` → token + tap subscriptions cancel
-- `build()` → IndexedStack + NavigationBar
+- `_listenCampaigns()` → `FirebaseMessaging.onMessage`; `type == "campaign"` + settings ON par `showCampaign()` + in-app banner state
+- `_openNotification(message)` → `type == "sos"` par `latitude`/`longitude` se `/alert-map?lat=&lng=&name=` push (missing coords → `/alerts`); campaign tap par koi navigation nahi
+- `_campaignBanner()` → screen ke bottom par floating card (icon, title, body, dismiss); `Material` + palette, SnackBar nahi
+- `dispose()` → token + tap + message subscriptions cancel
+- `build()` → `Stack` (IndexedStack + campaign banner) + NavigationBar
 
 > Note: `IndexedStack` ki wajah se teeno screens zinda rehti hain, is liye Map screen ka SOS listener har tab par chalta rehta hai.
 
@@ -868,10 +868,12 @@ Functions:
 
 ### `NotificationService`
 - channel: `sos_alerts` ("SOS alerts", description "Emergency alerts from your group members.", importance max)
+- channel: `campaigns` ("Campaigns", description "News, tips and announcements from Family Locator.", importance high)
 - `_ready` flag
-- `init()` — initialize plugin + create channel
+- `init()` — initialize plugin + create dono channels
 - `requestPermission()` — request notifications permission
 - `showSos({senderName, groupName})` — id 1, title "SOS from X", body "X needs help in Y.", payload `sos`
+- `showCampaign({title, body})` — id 2, channel `campaigns`, payload `campaign`
 
 ---
 
@@ -1061,13 +1063,15 @@ firebase deploy --only functions
 - `MainActivity` (singleTop, launchMode)
 - Background service: `id.flutter.flutter_background_service.BackgroundService` (`foregroundServiceType="location"`)
 - AdMob App ID: `ca-app-pub-3940256099942544~3347511713` (test)
+- Default FCM channel: `com.google.firebase.messaging.default_notification_channel_id` = `campaigns`
 - Queries: `PROCESS_TEXT`
 
 ---
 
 ## 15. Notification / FCM Flow
 
-1. Startup: local notification permission + `sos_alerts` channel.
+### SOS (server-triggered)
+1. Startup: local notification permission + `sos_alerts` + `campaigns` channels.
 2. Login/HomeShell: `MessagingService.register()` → token → `users/{uid}.fcmToken`.
 3. Token refresh: `onTokenRefresh` → token update.
 4. SOS send: `sendSos()` Firestore me `groups/{id}.sos` + `alerts` doc likhta hai.
@@ -1075,7 +1079,14 @@ firebase deploy --only functions
 6. Foreground in-app: Map screen Firestore listener → `_notifySosIfNeeded()` → local `showSos()`.
 7. Settings toggle OFF: token clear + delete (server push band).
 8. Tap handling: `onMessageOpenedApp` (background tap) + `getInitialMessage()` (cold start) → `HomeShell._openNotification()` → SOS par `/alert-map?lat=&lng=&name=` push; coords missing ho to `/alerts`.
-9. `FirebaseMessaging.onMessage` / `onBackgroundMessage`: **abhi register nahi**.
+
+### Campaigns (Firebase Console)
+1. Console: Engage → Messaging → New campaign → Firebase Notification message.
+2. Android Notification Channel: `campaigns` (manifest default bhi `campaigns`); Custom data: `type` = `campaign`.
+3. App band/background: OS notification khud dikhata hai (koi background handler nahi chahiye).
+4. App khuli: `FirebaseMessaging.onMessage` → `type == "campaign"` + notifications ON → local `showCampaign()` + HomeShell bottom floating banner (dismissible).
+5. Campaign tap: koi special navigation nahi (app khulti hai, `_openNotification` sirf `sos` handle karta hai).
+6. Audience: console sirf app/topic/segment target kar sakta hai; group-wise targeting ke liye topic subscription chahiye (abhi nahi).
 
 ---
 
@@ -1138,13 +1149,12 @@ Total: 10 tests (last run 10/10 pass).
 1. **AppConfig URLs khaali hain** — Share, Rate us, Feedback, Help, Terms, Privacy Policy disabled hain.
 2. **AdMob test IDs** — release se pehle real App ID + unit IDs chahiye.
 3. **Cloud Function deploy nahi hui** — Blaze plan chahiye.
-4. **Foreground FCM handler missing** — `FirebaseMessaging.onMessage` register nahi; filhaal Firestore listener se kaam chal raha hai.
-5. **Background message handler missing** — `onBackgroundMessage` register nahi (notification payload use hoti hai is liye OS display karta hai).
-6. **`http` aur `googleapis_auth` dependencies** — purane client-side push code se bachi hui hain, ab use nahi hoti.
-7. **Profile photo** — Firebase Storage ke bajaye base64 data URI Firestore me save hoti hai.
-8. **`copyInviteCode` SnackBar** — baqi app me SnackBar banned hai, sirf yahan maujood hai.
-9. **iOS support** — hata di gayi; sirf Android.
-10. **`location_repository.dart`** — `latestPoint` me formatting thori odd hai (functionally theek hai).
+4. **Campaign audience group-wise nahi** — console sirf app/topic/segment target karta hai; group topics abhi implement nahi.
+5. **In-app campaign banner** — sirf foreground me, aur HomeShell mounted ho tab dikhta hai.
+6. **Profile photo** — Firebase Storage ke bajaye base64 data URI Firestore me save hoti hai.
+7. **`copyInviteCode` SnackBar** — baqi app me SnackBar banned hai, sirf yahan maujood hai.
+8. **iOS support** — hata di gayi; sirf Android.
+9. **`location_repository.dart`** — `latestPoint` me formatting thori odd hai (functionally theek hai).
 
 ---
 
