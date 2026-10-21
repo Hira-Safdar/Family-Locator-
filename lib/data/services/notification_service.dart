@@ -10,7 +10,7 @@ class NotificationService {
       'Emergency alerts from your group members.';
 
   static const String _campaignChannelId = 'campaigns';
-  static const String _campaignChannelName = 'Campaigns';
+  static const String _campaignChannelName = 'Announcements';
   static const String _campaignChannelDescription =
       'News, tips and announcements from Family Locator.';
 
@@ -91,7 +91,7 @@ class NotificationService {
       ),
     );
     await _plugin.show(
-      id: 2,
+      id: DateTime.now().millisecondsSinceEpoch.remainder(1 << 30),
       title: title,
       body: body,
       notificationDetails: details,

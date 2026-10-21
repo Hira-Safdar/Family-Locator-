@@ -131,11 +131,10 @@ Functions:
 - `initState()` → `_registerPushToken()` + `_listenNotificationTaps()` + `_listenCampaigns()`
 - `_registerPushToken()` → `MessagingService.register()` → `saveFcmToken(uid, token)`; `onTokenRefresh` subscribe
 - `_listenNotificationTaps()` → `onMessageOpenedApp` subscribe + `getInitialMessage()` check
-- `_listenCampaigns()` → `FirebaseMessaging.onMessage`; `type == "campaign"` + settings ON par `showCampaign()` + in-app banner state
+- `_listenCampaigns()` → `FirebaseMessaging.onMessage`; `type == "campaign"` + settings ON par `showCampaign()` + `campaignBannerProvider.show()`
 - `_openNotification(message)` → `type == "sos"` par `latitude`/`longitude` se `/alert-map?lat=&lng=&name=` push (missing coords → `/alerts`); campaign tap par koi navigation nahi
-- `_campaignBanner()` → screen ke bottom par floating card (icon, title, body, dismiss); `Material` + palette, SnackBar nahi
 - `dispose()` → token + tap + message subscriptions cancel
-- `build()` → `Stack` (IndexedStack + campaign banner) + NavigationBar
+- `build()` → `Stack` (IndexedStack + top `CampaignBanner` overlay, teeno tabs ke upar) + NavigationBar
 
 > Note: `IndexedStack` ki wajah se teeno screens zinda rehti hain, is liye Map screen ka SOS listener har tab par chalta rehta hai.
 
@@ -174,6 +173,13 @@ Functions:
 - `_loadAd()` — adaptive banner size (`getLargeAnchoredAdaptiveBannerAdSizeWithOrientation`), load
 - `dispose()` — ad dispose
 - `build()` — load hone tak 50px placeholder, phir `AdWidget`
+
+### `CampaignBanner`
+- Props: `title`, `body`, `onDismiss`
+- State: `_timer` (8 seconds)
+- `initState()` / `didUpdateWidget()` — timer start/reset
+- `dispose()` — timer cancel
+- `build()` — top se slide-in (`TweenAnimationBuilder` + `FractionalTranslation`), `Material` card, campaign icon, title 16/w600, body 14, X button
 
 ---
 
@@ -743,6 +749,14 @@ Helpers:
 ### `notification_provider.dart`
 - `notificationServiceProvider` — `Provider<NotificationService>` (main override)
 
+### `campaign_banner_provider.dart`
+| Provider | Type | Purpose |
+|---|---|---|
+| `campaignBannerProvider` | `NotifierProvider<CampaignBannerNotifier, CampaignBannerState?>` | current campaign banner |
+
+`CampaignBannerState`: `title`, `body`
+`CampaignBannerNotifier`: `build()` → null, `show({title, body})`, `dismiss()`
+
 ### `app_startup_provider.dart`
 - `minimumSplashProvider` — `FutureProvider<void>`, 1.8s timer + `Completer`, timer cancel on dispose
 
@@ -868,12 +882,12 @@ Functions:
 
 ### `NotificationService`
 - channel: `sos_alerts` ("SOS alerts", description "Emergency alerts from your group members.", importance max)
-- channel: `campaigns` ("Campaigns", description "News, tips and announcements from Family Locator.", importance high)
+- channel: `campaigns` ("Announcements", description "News, tips and announcements from Family Locator.", importance high)
 - `_ready` flag
 - `init()` — initialize plugin + create dono channels
 - `requestPermission()` — request notifications permission
 - `showSos({senderName, groupName})` — id 1, title "SOS from X", body "X needs help in Y.", payload `sos`
-- `showCampaign({title, body})` — id 2, channel `campaigns`, payload `campaign`
+- `showCampaign({title, body})` — timestamp-based id (SOS id 1 se alag), channel `campaigns`, payload `campaign`
 
 ---
 
@@ -1084,7 +1098,7 @@ firebase deploy --only functions
 1. Console: Engage → Messaging → New campaign → Firebase Notification message.
 2. Android Notification Channel: `campaigns` (manifest default bhi `campaigns`); Custom data: `type` = `campaign`.
 3. App band/background: OS notification khud dikhata hai (koi background handler nahi chahiye).
-4. App khuli: `FirebaseMessaging.onMessage` → `type == "campaign"` + notifications ON → local `showCampaign()` + HomeShell bottom floating banner (dismissible).
+4. App khuli: `FirebaseMessaging.onMessage` → `type == "campaign"` + notifications ON → local `showCampaign()` + `campaignBannerProvider.show()`; banner HomeShell ke top par teeno tabs ke upar slide hota hai, 8s baad auto-dismiss (X se bhi band).
 5. Campaign tap: koi special navigation nahi (app khulti hai, `_openNotification` sirf `sos` handle karta hai).
 6. Audience: console sirf app/topic/segment target kar sakta hai; group-wise targeting ke liye topic subscription chahiye (abhi nahi).
 
@@ -1150,7 +1164,7 @@ Total: 10 tests (last run 10/10 pass).
 2. **AdMob test IDs** — release se pehle real App ID + unit IDs chahiye.
 3. **Cloud Function deploy nahi hui** — Blaze plan chahiye.
 4. **Campaign audience group-wise nahi** — console sirf app/topic/segment target karta hai; group topics abhi implement nahi.
-5. **In-app campaign banner** — sirf foreground me, aur HomeShell mounted ho tab dikhta hai.
+5. **In-app campaign banner** — sirf foreground me, HomeShell mounted ho tab; top overlay, 8s auto-dismiss.
 6. **Profile photo** — Firebase Storage ke bajaye base64 data URI Firestore me save hoti hai.
 7. **`copyInviteCode` SnackBar** — baqi app me SnackBar banned hai, sirf yahan maujood hai.
 8. **iOS support** — hata di gayi; sirf Android.
@@ -1184,10 +1198,10 @@ lib/
                privacy_controls, settings_screen, view_profile)
     shell/home_shell.dart
     splash/splash_screen.dart
-  providers/ (alert, app_startup, auth, group, location, member_locations,
-              notification, settings)
-  shared_widgets/ (banner_ad_widget, custom_button, error_view, loading_indicator,
-                   offline_view, profile_avatar)
+  providers/ (alert, app_startup, auth, campaign_banner, group, location,
+              member_locations, notification, settings)
+  shared_widgets/ (banner_ad_widget, campaign_banner, custom_button, error_view,
+                   loading_indicator, offline_view, profile_avatar)
 functions/
   index.js
   package.json
