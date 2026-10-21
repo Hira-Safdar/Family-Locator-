@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../providers/auth_provider.dart';
 import '../group_setup/groups_screen.dart';
@@ -18,11 +20,47 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
   StreamSubscription<String>? _tokenSub;
+  StreamSubscription<RemoteMessage>? _tapSub;
 
   @override
   void initState() {
     super.initState();
     _registerPushToken();
+    _listenNotificationTaps();
+  }
+
+  void _listenNotificationTaps() {
+    final messaging = ref.read(messagingServiceProvider);
+    _tapSub = messaging.onMessageOpenedApp.listen(_openNotification);
+    messaging.getInitialMessage().then((message) {
+      if (message != null) _openNotification(message);
+    });
+  }
+
+  void _openNotification(RemoteMessage message) {
+    if (!mounted) return;
+    final data = message.data;
+    if (data['type'] != 'sos') return;
+    final latitude = double.tryParse(data['latitude'] ?? '');
+    final longitude = double.tryParse(data['longitude'] ?? '');
+    final name = data['name'] ?? '';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (latitude == null || longitude == null) {
+        context.push('/alerts');
+        return;
+      }
+      context.push(
+        Uri(
+          path: '/alert-map',
+          queryParameters: {
+            'lat': '$latitude',
+            'lng': '$longitude',
+            'name': name,
+          },
+        ).toString(),
+      );
+    });
   }
 
   Future<void> _registerPushToken() async {
@@ -43,6 +81,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   void dispose() {
     _tokenSub?.cancel();
+    _tapSub?.cancel();
     super.dispose();
   }
 

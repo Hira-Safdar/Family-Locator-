@@ -21,7 +21,14 @@ exports.sosPush = onDocumentUpdated("groups/{groupId}", async (event) => {
     await sendToMembers(memberIds, senderUid, {
       title: `SOS from ${senderName}`,
       body: `${senderName} needs help in ${groupName}.`,
-      data: { type: "sos", groupId, uid: senderUid },
+      data: {
+        type: "sos",
+        groupId,
+        uid: senderUid,
+        name: senderName,
+        latitude: String(afterSos.latitude ?? ""),
+        longitude: String(afterSos.longitude ?? ""),
+      },
     });
     return null;
   }

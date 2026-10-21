@@ -5,6 +5,11 @@ class MessagingService {
 
   Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
 
+  Stream<RemoteMessage> get onMessageOpenedApp =>
+      FirebaseMessaging.onMessageOpenedApp;
+
+  Future<RemoteMessage?> getInitialMessage() => _messaging.getInitialMessage();
+
   Future<String?> register() async {
     final settings = await _messaging.requestPermission();
     if (settings.authorizationStatus == AuthorizationStatus.denied) {
