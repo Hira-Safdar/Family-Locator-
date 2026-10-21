@@ -129,7 +129,7 @@
 
 Functions:
 - `initState()` → `_registerPushToken()` + `_listenNotificationTaps()` + `_listenCampaigns()`
-- `_registerPushToken()` → `MessagingService.register()` → `saveFcmToken(uid, token)`; `onTokenRefresh` subscribe
+- `_registerPushToken()` → `MessagingService.register()` → `saveFcmToken(uid, token)`; `onTokenRefresh` subscribe; debug me token print
 - `_listenNotificationTaps()` → `onMessageOpenedApp` subscribe + `getInitialMessage()` check
 - `_listenCampaigns()` → `FirebaseMessaging.onMessage`; `type == "campaign"` + settings ON par `showCampaign()` + `campaignBannerProvider.show()`
 - `_openNotification(message)` → `type == "sos"` par `latitude`/`longitude` se `/alert-map?lat=&lng=&name=` push (missing coords → `/alerts`); campaign tap par koi navigation nahi

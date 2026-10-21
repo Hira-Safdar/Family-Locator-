@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -92,9 +93,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     try {
       final token = await messaging.register();
       if (token != null && token.isNotEmpty) {
+        if (kDebugMode) debugPrint('FCM token: $token');
         await ref.read(authRepositoryProvider).saveFcmToken(uid, token);
       }
       _tokenSub = messaging.onTokenRefresh.listen((token) {
+        if (kDebugMode) debugPrint('FCM token refreshed: $token');
         ref.read(authRepositoryProvider).saveFcmToken(uid, token);
       });
     } catch (_) {}
