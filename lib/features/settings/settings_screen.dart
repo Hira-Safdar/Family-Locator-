@@ -258,7 +258,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
             title: const Text('Notifications'),
-            subtitle: const Text('Alerts when a member needs help'),
+            subtitle: const Text('SOS alerts and announcements'),
             value: settings.notificationsEnabled,
             onChanged: _setNotifications,
           ),

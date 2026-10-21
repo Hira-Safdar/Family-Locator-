@@ -410,7 +410,7 @@ Functions:
    - Tap → `_pickThemeMode()` → `SimpleDialog("Appearance")` with System default / Light / Dark + check mark
 3. **Notifications** (`SwitchListTile`)
    - Icon: `Icons.notifications_outlined`
-   - Subtitle: "Alerts when a member needs help"
+   - Subtitle: "SOS alerts and announcements"
    - Toggle → `_setNotifications(enabled)`
    - ON: `messaging.register()` + `saveFcmToken`
    - OFF: `clearFcmToken` + `messaging.deleteToken()`
