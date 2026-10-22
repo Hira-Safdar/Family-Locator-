@@ -169,7 +169,10 @@ class AuthRepository {
   }
 
   Future<void> saveFcmToken(String uid, String token) async {
-    await _firestore.setDoc('users/$uid', {'fcmToken': token}, merge: true);
+    await _firestore.setDoc('users/$uid', {
+      'fcmToken': token,
+      'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+    }, merge: true);
   }
 
   Future<void> clearFcmToken(String uid) async {

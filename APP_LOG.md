@@ -129,9 +129,10 @@
 
 Functions:
 - `initState()` → `_registerPushToken()` + `_listenNotificationTaps()` + `_listenCampaigns()`
-- `_registerPushToken()` → `MessagingService.register()` → `saveFcmToken(uid, token)`; `onTokenRefresh` subscribe; debug me token print
+- `didChangeAppLifecycleState(resumed)` → `_registerPushToken()` (token fresh re-save)
+- `_registerPushToken()` → toggle OFF ho to skip; ON ho to `MessagingService.register()` → `saveFcmToken(uid, token)`; `onTokenRefresh` subscribe; debug me token print
 - `_listenNotificationTaps()` → `onMessageOpenedApp` subscribe + `getInitialMessage()` check
-- `_listenCampaigns()` → `FirebaseMessaging.onMessage`; `type == "campaign"` + settings ON par `showCampaign()` + `campaignBannerProvider.show()`
+- `_listenCampaigns()` → `FirebaseMessaging.onMessage`; `type == "sos"`/`"sos_resolved"` ignore; baqi notification-type messages (custom data ke baghair bhi) campaign maane jate hain; settings OFF par skip; `showCampaign()` + `campaignBannerProvider.show()` + debug log
 - `_openNotification(message)` → `type == "sos"` par `latitude`/`longitude` se `/alert-map?lat=&lng=&name=` push (missing coords → `/alerts`); campaign tap par koi navigation nahi
 - `dispose()` → token + tap + message subscriptions cancel
 - `build()` → `Stack` (IndexedStack + top `CampaignBanner` overlay, teeno tabs ke upar) + NavigationBar
@@ -773,7 +774,7 @@ Helpers:
 - `updateProfile({name, photoFilePath, phone, removePhoto})` → base64 photo data URI + auth display name
 - `changeEmail({currentPassword, newEmail})` → reauth + `verifyBeforeUpdateEmail`
 - `changePassword({currentPassword, newPassword})` → reauth + update
-- `saveFcmToken(uid, token)` → `users/{uid}.fcmToken`
+- `saveFcmToken(uid, token)` → `users/{uid}.fcmToken` + `fcmTokenUpdatedAt` (server timestamp)
 - `clearFcmToken(uid)` → delete field
 - `sendPasswordReset(email)`
 - `sendEmailVerification()`

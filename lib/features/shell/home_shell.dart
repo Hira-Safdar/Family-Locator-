@@ -22,7 +22,8 @@ class HomeShell extends ConsumerStatefulWidget {
   ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends ConsumerState<HomeShell> {
+class _HomeShellState extends ConsumerState<HomeShell>
+    with WidgetsBindingObserver {
   int _index = 0;
   StreamSubscription<String>? _tokenSub;
   StreamSubscription<RemoteMessage>? _tapSub;
@@ -31,18 +32,32 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _registerPushToken();
     _listenNotificationTaps();
     _listenCampaigns();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _registerPushToken();
+    }
+  }
+
   void _listenCampaigns() {
     _messageSub = FirebaseMessaging.onMessage.listen((message) {
-      if (message.data['type'] != 'campaign') return;
+      final type = message.data['type'] ?? '';
+      if (type == 'sos' || type == 'sos_resolved') return;
+      if (type != 'campaign' && message.notification == null) return;
       if (!ref.read(settingsProvider).notificationsEnabled) return;
       final title = message.notification?.title ?? '';
       final body = message.notification?.body ?? '';
       if (title.isEmpty && body.isEmpty) return;
+      if (kDebugMode) {
+        debugPrint('FCM message received: type=$type title=$title');
+      }
       ref
           .read(notificationServiceProvider)
           .showCampaign(title: title, body: body);
@@ -89,6 +104,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   Future<void> _registerPushToken() async {
     final uid = ref.read(authStateProvider).value;
     if (uid == null) return;
+    if (!ref.read(settingsProvider).notificationsEnabled) return;
     final messaging = ref.read(messagingServiceProvider);
     try {
       final token = await messaging.register();
@@ -105,6 +121,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tokenSub?.cancel();
     _tapSub?.cancel();
     _messageSub?.cancel();
