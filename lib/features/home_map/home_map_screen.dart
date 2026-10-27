@@ -35,6 +35,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selectedUid;
   LocationPoint? _selectedPoint;
   final Set<String> _notifiedSos = {};
+  ProviderSubscription<AsyncValue<List<GroupModel>>>? _groupsSub;
 
   @override
   void initState() {
@@ -42,10 +43,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Future.microtask(() {
       ref.read(locationControllerProvider.notifier).start();
     });
+    _groupsSub = ref.listenManual(myGroupsStreamProvider, (previous, next) {
+      final nextGroups = next.value ?? const <GroupModel>[];
+      final selfUid = ref.read(authStateProvider).value;
+      for (final group in nextGroups) {
+        _notifySosIfNeeded(group, selfUid);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _groupsSub?.close();
     _mapController?.dispose();
     super.dispose();
   }
@@ -91,12 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final hasError = locationError.hasError || locationsAsync.hasError;
     final selectedGroupId = ref.watch(selectedGroupIdProvider);
 
-    ref.listen(myGroupsStreamProvider, (previous, next) {
-      final nextGroups = next.value ?? const <GroupModel>[];
-      for (final group in nextGroups) {
-        _notifySosIfNeeded(group, selfUid);
-      }
-    });
+    // SOS notifications are handled in initState via listenManual for all groups
 
     GroupModel? activeGroup;
     if (hasGroup) {
@@ -439,7 +443,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _sosBanner(GroupModel group, String? selfUid) {
     final sos = group.sos!;
-    final isMine = sos.uid == selfUid;
+    final currentUid = selfUid ?? ref.read(authStateProvider).value;
+    final isMine = currentUid != null && sos.uid == currentUid;
     return Material(
       color: context.palette.error,
       borderRadius: BorderRadius.circular(12),
@@ -453,8 +458,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(
               child: Text(
                 isMine
-                    ? 'Your SOS is active. Group members have been alerted.'
-                    : '${sos.name} needs help!',
+                    ? 'You sent an SOS. Group members have been alerted.'
+                    : '${sos.name} sent an SOS and needs help!',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
