@@ -114,7 +114,7 @@ Future<User?> _waitForUser() async {
 
 LocationSettings _settings(int seconds, int minMeters) {
   return AndroidSettings(
-    accuracy: LocationAccuracy.high,
+    accuracy: LocationAccuracy.bestForNavigation,
     distanceFilter: minMeters,
     intervalDuration: Duration(seconds: seconds),
   );
