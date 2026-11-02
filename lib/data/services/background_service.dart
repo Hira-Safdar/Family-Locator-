@@ -148,15 +148,20 @@ Future<void> _save(Position position) async {
     battery = await Battery().batteryLevel;
   } catch (_) {}
   try {
-    await FirebaseFirestore.instance
-        .collection('location_points')
-        .doc(uid)
-        .set({
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'timestampMs': DateTime.now().millisecondsSinceEpoch,
-          'batteryLevel': battery,
-          'accuracy': position.accuracy,
-        });
+    final db = FirebaseFirestore.instance;
+    final groups = await db
+        .collection('groups')
+        .where('memberIds', arrayContains: uid)
+        .get();
+    final data = {
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+      'timestampMs': DateTime.now().millisecondsSinceEpoch,
+      'batteryLevel': battery,
+      'accuracy': position.accuracy,
+    };
+    for (final group in groups.docs) {
+      await group.reference.collection('locations').doc(uid).set(data);
+    }
   } catch (_) {}
 }

@@ -8,6 +8,8 @@ abstract final class AdUnits {
   static const premiumBanner = 'ca-app-pub-3940256099942544/6300978111';
   static const groupsBanner = 'ca-app-pub-3940256099942544/9214589741';
   static const groupSetupBanner = 'ca-app-pub-3940256099942544/6300978111';
+  static const profileBanner = 'ca-app-pub-3940256099942544/6300978111';
+  static const profileEditBanner = 'ca-app-pub-3940256099942544/6300978111';
   static const homeBanner = 'ca-app-pub-3940256099942544/6300978111';
   static const settingsBanner = 'ca-app-pub-3940256099942544/6300978111';
   static const groupTransitionInterstitial =

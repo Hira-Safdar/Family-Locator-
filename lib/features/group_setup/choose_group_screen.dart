@@ -89,7 +89,7 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: ElevatedButton(
                 onPressed: _selected == null ? null : _continue,
-                child: const Text('Continue'),
+                child: Text(strings.continueLabel),
               ),
             ),
           ],

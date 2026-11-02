@@ -24,25 +24,13 @@ class GroupsScreen extends ConsumerStatefulWidget {
 }
 
 class _GroupsScreenState extends ConsumerState<GroupsScreen> {
-  final _searchController = TextEditingController();
-  String _query = '';
   String? _category;
   _GroupSort _sort = _GroupSort.newest;
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   List<GroupModel> _apply(List<GroupModel> groups) {
-    final query = _query.trim().toLowerCase();
-    final list = groups.where((group) {
-      if (_category != null && group.category != _category) return false;
-      if (query.isEmpty) return true;
-      return group.name.toLowerCase().contains(query) ||
-          group.inviteCode.toLowerCase().contains(query);
-    }).toList();
+    final list = groups
+        .where((group) => _category == null || group.category == _category)
+        .toList();
 
     switch (_sort) {
       case _GroupSort.name:
@@ -109,28 +97,6 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-            child: TextField(
-              controller: _searchController,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: strings.searchNameCode,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _query.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _query = '');
-                        },
-                      ),
-                isDense: true,
-              ),
-              onChanged: (value) => setState(() => _query = value),
-            ),
-          ),
           Row(
             children: [
               Expanded(
@@ -291,7 +257,7 @@ class _NoMatches extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Try a different search or category filter.',
+              'Try a different category filter.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: context.palette.textLight,
@@ -318,6 +284,7 @@ class _GroupCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final strings = AppLocalizations.of(context);
     final members = group.memberIds.length;
     final isOwner = ref.watch(authStateProvider).value == group.ownerId;
 
@@ -460,12 +427,12 @@ class _GroupCard extends ConsumerWidget {
               },
               itemBuilder: (context) => [
                 if (isOwner)
-                  const PopupMenuItem(value: 'edit', child: Text('Edit name')),
-                const PopupMenuItem(
+                  PopupMenuItem(value: 'edit', child: Text(strings.editName)),
+                PopupMenuItem(
                   value: 'share',
-                  child: Text('Share invite'),
+                  child: Text(strings.shareInviteLabel),
                 ),
-                const PopupMenuItem(value: 'qr', child: Text('Show QR')),
+                PopupMenuItem(value: 'qr', child: Text(strings.showQr)),
               ],
             ),
           ],
@@ -490,7 +457,7 @@ class _GroupCard extends ConsumerWidget {
               child: Icon(Icons.qr_code_2, color: context.palette.textDark),
             ),
             const SizedBox(width: 12),
-            const Expanded(child: Text('Invite QR')),
+            Expanded(child: Text(AppLocalizations.of(context).inviteQr)),
           ],
         ),
         content: Column(
@@ -535,7 +502,7 @@ class _GroupCard extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(AppLocalizations.of(context).close),
           ),
         ],
       ),
@@ -566,9 +533,10 @@ class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
   }
 
   Future<void> _save() async {
+    final strings = AppLocalizations.of(context);
     final name = _controller.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Group name cannot be empty');
+      setState(() => _error = strings.groupNameCannotEmpty);
       return;
     }
     if (name == widget.group.name) {
@@ -589,15 +557,16 @@ class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e is Failure ? e.message : 'Could not rename the group.';
+        _error = e is Failure ? e.message : strings.couldNotRenameGroup;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Edit group name'),
+      title: Text(strings.editGroupName),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,7 +576,7 @@ class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
             enabled: !_busy,
             autofocus: true,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(labelText: 'Group name'),
+            decoration: InputDecoration(labelText: strings.groupName),
             onChanged: (_) {
               if (_error != null) setState(() => _error = null);
             },
@@ -627,7 +596,7 @@ class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(strings.cancel),
         ),
         TextButton(
           onPressed: _busy ? null : _save,
@@ -637,7 +606,7 @@ class _RenameGroupDialogState extends ConsumerState<_RenameGroupDialog> {
                   width: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(strings.save),
         ),
       ],
     );

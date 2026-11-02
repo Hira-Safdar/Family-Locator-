@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../data/models/group_model.dart';
@@ -40,6 +41,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
     required String confirmLabel,
     Color? confirmColor,
   }) {
+    final strings = AppLocalizations.of(context);
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -48,7 +50,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -63,11 +65,11 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
   }
 
   Future<void> _leave(GroupModel group) async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: 'Leave group?',
-      message:
-          'You will stop sharing your location with "${group.name}" and leave the group.',
-      confirmLabel: 'Leave',
+      title: strings.leaveGroupQuestion,
+      message: strings.leaveGroupMessage(group.name),
+      confirmLabel: strings.leave,
     );
     if (confirmed != true || !mounted) return;
     setState(() {
@@ -89,11 +91,11 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
   }
 
   Future<void> _delete(GroupModel group) async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: 'Delete group?',
-      message:
-          'This permanently deletes "${group.name}" for everyone. This cannot be undone.',
-      confirmLabel: 'Delete',
+      title: strings.deleteGroupQuestion,
+      message: strings.deleteGroupMessage(group.name),
+      confirmLabel: strings.delete,
     );
     if (confirmed != true || !mounted) return;
     setState(() {
@@ -115,10 +117,11 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
   }
 
   Future<void> _remove(GroupModel group, String uid, String name) async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: 'Remove member?',
-      message: 'Remove $name from "${group.name}"?',
-      confirmLabel: 'Remove',
+      title: strings.removeMemberQuestion,
+      message: strings.removeMemberMessage(name, group.name),
+      confirmLabel: strings.remove,
     );
     if (confirmed != true || !mounted) return;
 
@@ -144,11 +147,11 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
   }
 
   Future<void> _makeOwner(GroupModel group, String uid, String name) async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await _confirm(
-      title: 'Transfer ownership?',
-      message:
-          '$name will become the owner of "${group.name}". You will stay a member and will no longer manage this group.',
-      confirmLabel: 'Make owner',
+      title: strings.transferOwnershipQuestion,
+      message: strings.transferOwnershipMessage(name, group.name),
+      confirmLabel: strings.makeOwner,
       confirmColor: context.palette.primary,
     );
     if (confirmed != true || !mounted) return;
@@ -181,9 +184,10 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
     required bool isSelf,
     required LocationPoint? location,
   }) {
+    final strings = AppLocalizations.of(context);
     final role = memberIsOwner
-        ? 'Group owner'
-        : (isSelf ? 'You (member)' : 'Member');
+        ? strings.groupOwner
+        : (isSelf ? strings.youMember : strings.member);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -201,7 +205,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
               const SizedBox(height: 8),
               Text(
                 location == null
-                    ? 'No location shared yet'
+                    ? strings.noLocationShared
                     : 'Last seen ${DateFormatter.lastSeen(location.timestamp)}',
                 style: TextStyle(color: context.palette.textLight),
               ),
@@ -219,7 +223,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                       );
                     },
                     icon: const Icon(Icons.map_outlined),
-                    label: const Text('View on map'),
+                    label: Text(strings.viewOnMap),
                   ),
                 ),
             ],
@@ -231,6 +235,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     final groupsAsync = ref.watch(myGroupsStreamProvider);
     final selfUid = ref.watch(authStateProvider).value;
     final locations =
@@ -238,14 +243,11 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
         const <String, LocationPoint>{};
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Members')),
+      appBar: AppBar(title: Text(strings.members)),
       body: groupsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => const Center(
-          child: Text(
-            'Could not load members. Please check your internet connection and try again.',
-            textAlign: TextAlign.center,
-          ),
+        error: (_, _) => Center(
+          child: Text(strings.couldNotLoadMembers, textAlign: TextAlign.center),
         ),
         data: (groups) {
           GroupModel? group;
@@ -256,9 +258,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
             }
           }
           if (group == null) {
-            return const Center(
-              child: Text('This group is no longer available.'),
-            );
+            return Center(child: Text(strings.groupUnavailable));
           }
           final isOwner = group.ownerId == selfUid;
           final query = _query.trim().toLowerCase();
@@ -291,7 +291,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                     controller: _searchController,
                     textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
-                      hintText: 'Search members',
+                      hintText: strings.searchMembers,
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _query.isEmpty
                           ? null
@@ -308,9 +308,9 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                   ),
                 ),
               if (visible.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(32),
-                  child: Center(child: Text('No members match your search.')),
+                  child: Center(child: Text(strings.noMembersMatch)),
                 ),
               for (final uid in visible)
                 _MemberTile(
@@ -356,7 +356,9 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                         icon: Icon(
                           isOwner ? Icons.delete_outline : Icons.logout,
                         ),
-                        label: Text(isOwner ? 'Delete group' : 'Leave group'),
+                        label: Text(
+                          isOwner ? strings.deleteGroupQuestion : strings.leave,
+                        ),
                       ),
               ),
             ],
@@ -410,15 +412,16 @@ class _MemberTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final strings = AppLocalizations.of(context);
     final profile = ref.watch(userProfileProvider(uid)).value;
     final shortId = uid.length >= 4
         ? uid.substring(uid.length - 4).toUpperCase()
         : uid.toUpperCase();
-    final name = profile?.name ?? 'Member $shortId';
+    final name = profile?.name ?? '${strings.member} $shortId';
     final showManage = canManage && !isSelf && !memberIsOwner;
 
     final subtitle = location == null
-        ? (isSelf ? 'This is you' : 'No location shared yet')
+        ? (isSelf ? strings.youMember : strings.noLocationShared)
         : 'Last seen ${DateFormatter.lastSeen(location!.timestamp)}';
 
     return ListTile(
@@ -440,10 +443,10 @@ class _MemberTile extends ConsumerWidget {
           ),
           if (memberIsOwner) ...[
             const SizedBox(width: 8),
-            _badge(context, 'Owner'),
+            _badge(context, strings.groupOwner),
           ] else if (isSelf) ...[
             const SizedBox(width: 8),
-            _badge(context, 'You'),
+            _badge(context, strings.youMember),
           ],
         ],
       ),
@@ -468,11 +471,14 @@ class _MemberTile extends ConsumerWidget {
                       }
                     },
                     itemBuilder: (context) => [
-                      PopupMenuItem(value: 'owner', child: Text('Make owner')),
+                      PopupMenuItem(
+                        value: 'owner',
+                        child: Text(strings.makeOwner),
+                      ),
                       PopupMenuItem(
                         value: 'remove',
                         child: Text(
-                          'Remove member',
+                          strings.remove,
                           style: TextStyle(color: context.palette.error),
                         ),
                       ),

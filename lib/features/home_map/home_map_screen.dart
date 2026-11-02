@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_config.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/utils/distance_calculator.dart';
@@ -319,22 +320,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _confirmSos(GroupModel group) async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Send SOS?'),
-        content: Text(
-          'This will alert everyone in "${group.name}" that you need help.',
-        ),
+        title: Text(strings.sendSosQuestion),
+        content: Text(strings.sosWarning(group.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: TextButton.styleFrom(foregroundColor: context.palette.error),
-            child: const Text('Send SOS'),
+            child: Text(strings.sendSos),
           ),
         ],
       ),
@@ -344,6 +344,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _sendSos(GroupModel group) async {
+    final strings = AppLocalizations.of(context);
     LocationPoint? point;
     try {
       point = await ref.read(locationServicesProvider).currentPoint();
@@ -351,9 +352,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       point = ref.read(myLocationProvider).value;
     }
     if (point == null) {
-      await _showSosError(
-        'Could not get your location. Please turn on location and try again.',
-      );
+      await _showSosError(strings.cannotGetLocation);
       return;
     }
     try {
@@ -369,7 +368,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       await _showSosError(e.message);
     } catch (_) {
       if (!mounted) return;
-      await _showSosError('Could not send SOS. Please try again.');
+      await _showSosError(AppLocalizations.of(context).couldNotSendSos);
     }
   }
 
@@ -381,7 +380,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       await _showSosError(e.message);
     } catch (_) {
       if (!mounted) return;
-      await _showSosError('Could not clear the alert. Please try again.');
+      await _showSosError(AppLocalizations.of(context).couldNotClearAlert);
     }
   }
 
@@ -416,12 +415,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('SOS failed'),
+        title: Text(AppLocalizations.of(context).sosFailed),
         content: Text(message, style: TextStyle(color: context.palette.error)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('OK'),
+            child: Text(AppLocalizations.of(context).ok),
           ),
         ],
       ),
@@ -445,8 +444,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(
               child: Text(
                 isMine
-                    ? 'You sent an SOS. Group members have been alerted.'
-                    : '${sos.name} sent an SOS and needs help!',
+                    ? AppLocalizations.of(context).sosSentMessage
+                    : AppLocalizations.of(context).sosNeedsHelp(sos.name),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -458,12 +457,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               TextButton(
                 onPressed: () => _focusOnSos(sos),
                 style: TextButton.styleFrom(foregroundColor: Colors.white),
-                child: const Text('View'),
+                child: Text(AppLocalizations.of(context).view),
               ),
             TextButton(
               onPressed: () => _resolveSos(group),
               style: TextButton.styleFrom(foregroundColor: Colors.white),
-              child: Text(isMine ? 'Cancel' : 'Resolve'),
+              child: Text(
+                isMine
+                    ? AppLocalizations.of(context).cancel
+                    : AppLocalizations.of(context).resolve,
+              ),
             ),
           ],
         ),

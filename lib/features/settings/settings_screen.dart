@@ -123,11 +123,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   String _themeModeLabel(ThemeMode mode) {
     switch (mode) {
       case ThemeMode.light:
-        return 'Light';
+        return AppLocalizations.of(context).light;
       case ThemeMode.dark:
-        return 'Dark';
+        return AppLocalizations.of(context).dark;
       default:
-        return 'System default';
+        return AppLocalizations.of(context).systemDefault;
     }
   }
 
@@ -135,7 +135,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final selected = await showDialog<ThemeMode>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
-        title: const Text('Appearance'),
+        title: Text(AppLocalizations.of(context).appearanceTitle),
         children: [
           for (final mode in ThemeMode.values)
             SimpleDialogOption(
@@ -176,12 +176,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   Future<void> _showAbout() async {
+    final strings = AppLocalizations.of(context);
     final info = await PackageInfo.fromPlatform();
     if (!mounted) return;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('About'),
+        title: Text(strings.about),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,16 +197,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               style: TextStyle(color: context.palette.textLight),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Keep your family connected and safe with live location '
-              'sharing and SOS alerts.',
-            ),
+            Text(strings.aboutDescription),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Close'),
+            child: Text(strings.close),
           ),
         ],
       ),
@@ -294,7 +292,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ListTile(
             leading: const Icon(Icons.email_outlined),
             title: Text(strings.changeEmail),
-            subtitle: const Text('Update your account email'),
+            subtitle: Text(strings.updateEmailSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/change-email'),
           ),
@@ -302,7 +300,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ListTile(
             leading: const Icon(Icons.password_outlined),
             title: Text(strings.changePassword),
-            subtitle: const Text('Update your account password'),
+            subtitle: Text(strings.updatePasswordSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/change-password'),
           ),
@@ -362,7 +360,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: const Text('About'),
+            title: Text(strings.about),
             subtitle: Text(strings.aboutDetails),
             trailing: const Icon(Icons.chevron_right),
             onTap: _showAbout,
@@ -466,20 +464,19 @@ class _LogoutConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Log out?'),
-      content: const Text(
-        'You will stop sharing your location until you sign in again.',
-      ),
+      title: Text(strings.logoutQuestion),
+      content: Text(strings.logoutMessage),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
+          child: Text(strings.cancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(
-            'Log out',
+            strings.logout,
             style: TextStyle(color: context.palette.error),
           ),
         ),
@@ -513,23 +510,23 @@ class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e is Failure ? e.message : 'Could not delete profile.';
+        _error = e is Failure
+            ? e.message
+            : AppLocalizations.of(context).couldNotDeleteProfile;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Delete Profile?'),
+      title: Text(strings.deleteProfileQuestion),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'This permanently removes your account, your location history and '
-            'your membership in every group. This cannot be undone.',
-          ),
+          Text(strings.deleteProfileMessage),
           if (_error != null) ...[
             const SizedBox(height: 12),
             Text(
@@ -544,7 +541,7 @@ class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
+          child: Text(strings.cancel),
         ),
         TextButton(
           onPressed: _busy ? null : _delete,
@@ -554,7 +551,10 @@ class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
                   width: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text('Delete', style: TextStyle(color: context.palette.error)),
+              : Text(
+                  strings.delete,
+                  style: TextStyle(color: context.palette.error),
+                ),
         ),
       ],
     );

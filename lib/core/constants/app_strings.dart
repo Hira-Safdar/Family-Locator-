@@ -221,7 +221,134 @@ class AppLocalizations {
   String get myLocation => _t('My location', 'میرا مقام');
   String get sendSos => _t('Send SOS', 'SOS بھیجیں');
   String get cancel => _t('Cancel', 'منسوخ کریں');
+  String get clear => _t('Clear', 'صاف کریں');
   String get save => _t('Save', 'محفوظ کریں');
+  String get removePhoto => _t('Remove photo', 'تصویر ہٹائیں');
+  String get remove => _t('Remove', 'ہٹائیں');
+  String get delete => _t('Delete', 'حذف کریں');
+  String get couldNotLoadMembers => _t(
+    'Could not load members. Please check your internet connection and try again.',
+    'ارکان لوڈ نہیں ہو سکے۔ اپنا انٹرنیٹ کنکشن چیک کر کے دوبارہ کوشش کریں۔',
+  );
+  String get enterYourName => _t('Enter your name', 'اپنا نام درج کریں');
+  String get alertsClearHistory => _t('Clear history', 'تاریخ صاف کریں');
+  String get all => _t('All', 'تمام');
+  String get active => _t('Active', 'فعال');
+  String get resolved => _t('Resolved', 'حل شدہ');
+  String get noAlertsYet => _t(
+    'No alerts yet.\nSend an SOS and it will appear here.',
+    'ابھی کوئی الرٹ نہیں۔\nSOS بھیجیں، یہ یہاں ظاہر ہوگا۔',
+  );
+  String get noAlertsMatch =>
+      _t('No alerts match this filter.', 'اس فلٹر سے کوئی الرٹ نہیں ملا۔');
+  String get couldNotLoadAlerts => _t(
+    'Could not load alerts. Please check your internet connection and try again.',
+    'الرٹس لوڈ نہیں ہو سکے۔ اپنا انٹرنیٹ کنکشن چیک کر کے دوبارہ کوشش کریں۔',
+  );
+  String get unknownMember => _t('Unknown member', 'نامعلوم رکن');
+  String sentAt(String value) => _t('Sent $value', '$value بھیجا گیا');
+  String resolvedAt(String value) => _t('Resolved $value', '$value حل ہوا');
+  String get clearAlertsQuestion =>
+      _t('Clear alerts history?', 'الرٹس کی تاریخ صاف کریں؟');
+  String get clearAlertsDescription => _t(
+    'This removes all of your past SOS alerts. This cannot be undone.',
+    'یہ آپ کے تمام پچھلے SOS الرٹس ہٹا دے گا۔ یہ واپس نہیں ہو سکتا۔',
+  );
+  String get couldNotClearAlerts =>
+      _t('Could not clear alerts.', 'الرٹس صاف نہیں ہو سکے۔');
+  String get sendSosQuestion => _t('Send SOS?', 'SOS بھیجیں؟');
+  String sosWarning(String name) => _t(
+    'This will alert everyone in "$name" that you need help.',
+    'اس سے "$name" کے تمام افراد کو معلوم ہوگا کہ آپ کو مدد چاہیے۔',
+  );
+  String get sosFailed => _t('SOS failed', 'SOS ناکام ہو گیا');
+  String get ok => _t('OK', 'ٹھیک ہے');
+  String get view => _t('View', 'دیکھیں');
+  String get resolve => _t('Resolve', 'حل کریں');
+  String get sosSentMessage => _t(
+    'You sent an SOS. Group members have been alerted.',
+    'آپ نے SOS بھیجا ہے۔ گروپ کے افراد کو اطلاع دے دی گئی ہے۔',
+  );
+  String sosNeedsHelp(String name) => _t(
+    '$name sent an SOS and needs help!',
+    '$name نے SOS بھیجا ہے اور مدد چاہیے!',
+  );
+  String get cannotGetLocation => _t(
+    'Could not get your location. Please turn on location and try again.',
+    'آپ کا مقام حاصل نہیں ہو سکا۔ مقام آن کر کے دوبارہ کوشش کریں۔',
+  );
+  String get couldNotSendSos => _t(
+    'Could not send SOS. Please try again.',
+    'SOS نہیں بھیجا جا سکا۔ دوبارہ کوشش کریں۔',
+  );
+  String get couldNotClearAlert => _t(
+    'Could not clear the alert. Please try again.',
+    'الرٹ صاف نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
+  );
+  String get editName => _t('Edit name', 'نام میں ترمیم');
+  String get shareInviteLabel => _t('Share invite', 'دعوت شیئر کریں');
+  String get showQr => _t('Show QR', 'QR دکھائیں');
+  String get inviteQr => _t('Invite QR', 'دعوتی QR');
+  String get editGroupName => _t('Edit group name', 'گروپ کے نام میں ترمیم');
+  String get groupNameCannotEmpty =>
+      _t('Group name cannot be empty', 'گروپ کا نام خالی نہیں ہو سکتا');
+  String get couldNotRenameGroup =>
+      _t('Could not rename the group.', 'گروپ کا نام تبدیل نہیں ہو سکا۔');
+  String get members => _t('Members', 'ارکان');
+  String get searchMembers => _t('Search members', 'ارکان تلاش کریں');
+  String get noMembersMatch =>
+      _t('No members match your search.', 'آپ کی تلاش سے کوئی رکن نہیں ملا۔');
+  String get viewOnMap => _t('View on map', 'نقشے پر دیکھیں');
+  String get groupUnavailable =>
+      _t('This group is no longer available.', 'یہ گروپ اب دستیاب نہیں ہے۔');
+  String get makeOwner => _t('Make owner', 'مالک بنائیں');
+  String get leaveGroupQuestion => _t('Leave group?', 'گروپ چھوڑیں؟');
+  String leaveGroupMessage(String name) => _t(
+    'You will stop sharing your location with "$name" and leave the group.',
+    'آپ "$name" کے ساتھ مقام شیئر کرنا بند کر کے گروپ چھوڑ دیں گے۔',
+  );
+  String get leave => _t('Leave', 'چھوڑیں');
+  String get deleteGroupQuestion => _t('Delete group?', 'گروپ حذف کریں؟');
+  String deleteGroupMessage(String name) => _t(
+    'This permanently deletes "$name" for everyone. This cannot be undone.',
+    'یہ سب کے لیے "$name" کو مستقل حذف کر دے گا۔ یہ واپس نہیں ہو سکتا۔',
+  );
+  String get removeMemberQuestion => _t('Remove member?', 'رکن ہٹائیں؟');
+  String removeMemberMessage(String name, String group) =>
+      _t('Remove $name from "$group"?', '$name کو "$group" سے ہٹائیں؟');
+  String get transferOwnershipQuestion =>
+      _t('Transfer ownership?', 'ملکیت منتقل کریں؟');
+  String transferOwnershipMessage(String name, String group) => _t(
+    '$name will become the owner of "$group". You will stay a member and will no longer manage this group.',
+    '$name "$group" کا مالک بن جائے گا۔ آپ رکن رہیں گے لیکن گروپ کا انتظام نہیں کر سکیں گے۔',
+  );
+  String get groupOwner => _t('Group owner', 'گروپ مالک');
+  String get youMember => _t('You (member)', 'آپ (رکن)');
+  String get member => _t('Member', 'رکن');
+  String get noLocationShared =>
+      _t('No location shared yet', 'ابھی مقام شیئر نہیں کیا گیا');
+  String get appearanceTitle => _t('Appearance', 'ظاہری شکل');
+  String get updateEmailSubtitle =>
+      _t('Update your account email', 'اپنے اکاؤنٹ کی ای میل اپ ڈیٹ کریں');
+  String get updatePasswordSubtitle =>
+      _t('Update your account password', 'اپنے اکاؤنٹ کا پاس ورڈ اپ ڈیٹ کریں');
+  String get logoutQuestion => _t('Log out?', 'لاگ آؤٹ کریں؟');
+  String get logoutMessage => _t(
+    'You will stop sharing your location until you sign in again.',
+    'دوبارہ سائن اِن کرنے تک آپ کا مقام شیئر نہیں ہوگا۔',
+  );
+  String get deleteProfileQuestion =>
+      _t('Delete Profile?', 'پروفائل حذف کریں؟');
+  String get deleteProfileMessage => _t(
+    'This permanently removes your account, your location history and your membership in every group. This cannot be undone.',
+    'یہ آپ کا اکاؤنٹ، مقام کی تاریخ اور تمام گروپس کی رکنیت مستقل حذف کر دے گا۔ یہ واپس نہیں ہو سکتا۔',
+  );
+  String get couldNotDeleteProfile =>
+      _t('Could not delete profile.', 'پروفائل حذف نہیں ہو سکا۔');
+  String get aboutDescription => _t(
+    'Keep your family connected and safe with live location sharing and SOS alerts.',
+    'لائیو مقام شیئرنگ اور SOS الرٹس کے ذریعے اپنے خاندان کو جڑا اور محفوظ رکھیں۔',
+  );
   String get pageNotFound => _t('Page not found', 'صفحہ نہیں ملا');
   String pageNotFoundAt(String location) =>
       _t("We couldn't find $location.", 'ہمیں $location نہیں ملا۔');

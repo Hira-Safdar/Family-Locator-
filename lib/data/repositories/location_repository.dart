@@ -46,7 +46,13 @@ class LocationRepository {
       throw const AuthFailure('You need to be signed in to clear history.');
     }
     try {
-      await _firestore.deleteDoc('location_points/$uid');
+      final groups = await _firestore
+          .collection('groups')
+          .where('memberIds', arrayContains: uid)
+          .get();
+      for (final group in groups.docs) {
+        await _firestore.deleteDoc('groups/${group.id}/locations/$uid');
+      }
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
     } catch (_) {
@@ -56,8 +62,8 @@ class LocationRepository {
     }
   }
 
-  Stream<LocationPoint?> latestPoint(String uid) {
-    return _firestore.docStream('location_points/$uid').map((snap) {
+  Stream<LocationPoint?> latestPoint(String groupId, String uid) {
+    return _firestore.docStream('groups/$groupId/locations/$uid').map((snap) {
       final data = snap.data();
       return data == null ? null : LocationPoint.fromJson(data);
     });

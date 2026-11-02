@@ -9,10 +9,11 @@ import 'group_provider.dart';
 import 'location_provider.dart';
 
 Stream<Map<String, LocationPoint>> _locationsFor(
+  String groupId,
   List<String> memberIds,
   LocationRepository repo,
 ) {
-  return _combineMemberLocations(memberIds, repo).map(
+  return _combineMemberLocations(groupId, memberIds, repo).map(
     (map) => Map<String, LocationPoint>.fromEntries(
       map.entries
           .where((entry) => entry.value != null)
@@ -35,7 +36,7 @@ final memberLocationsProvider = StreamProvider<Map<String, LocationPoint>>((
     orElse: () => groups.first,
   );
 
-  return _locationsFor(active.memberIds, repo);
+  return _locationsFor(active.id, active.memberIds, repo);
 });
 
 final groupMemberLocationsProvider =
@@ -51,10 +52,11 @@ final groupMemberLocationsProvider =
         }
       }
       if (group == null) return Stream.value(const <String, LocationPoint>{});
-      return _locationsFor(group.memberIds, repo);
+      return _locationsFor(group.id, group.memberIds, repo);
     });
 
 Stream<Map<String, LocationPoint?>> _combineMemberLocations(
+  String groupId,
   List<String> memberIds,
   LocationRepository repo,
 ) async* {
@@ -66,7 +68,7 @@ Stream<Map<String, LocationPoint?>> _combineMemberLocations(
 
   for (final uid in memberIds) {
     subs.add(
-      _withRetry(() => repo.latestPoint(uid)).listen((point) {
+      _withRetry(() => repo.latestPoint(groupId, uid)).listen((point) {
         latest[uid] = point;
         if (!controller.isClosed) controller.add(Map.of(latest));
       }),

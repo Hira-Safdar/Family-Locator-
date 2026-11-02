@@ -31,10 +31,17 @@ class AuthRepository {
         throw const AuthFailure('Signup Failed. Please try again.');
       }
       try {
-        await _firestore.setDoc(
-          'users/$uid',
-          UserProfile(uid: uid, name: name, email: email).toJson(),
-        );
+        await _firestore.setDoc('public_profiles/$uid', {
+          'uid': uid,
+          'name': name,
+          'photoUrl': null,
+        });
+        await _firestore.setDoc('users/$uid', {
+          'uid': uid,
+          'email': email,
+          'phone': null,
+          'sharingPaused': false,
+        });
       } catch (_) {}
       try {
         await _authService.sendEmailVerification();
@@ -65,6 +72,23 @@ class AuthRepository {
 
   Future<void> signOut() => _authService.signOut();
 
+  Future<void> migrateLegacyProfile() async {
+    final uid = _authService.currentUserId;
+    if (uid == null) return;
+    final legacy = await _firestore.getDoc('users/$uid');
+    if (legacy == null) return;
+    await _firestore.setDoc('public_profiles/$uid', {
+      'uid': uid,
+      'name': legacy['name'] ?? _authService.currentUserName ?? 'Member',
+      'photoUrl': legacy['photoUrl'],
+    }, merge: true);
+    await _firestore.setDoc('users/$uid', {
+      'uid': uid,
+      'email': legacy['email'] ?? _authService.currentUserEmail,
+      'phone': legacy['phone'],
+    }, merge: true);
+  }
+
   Future<void> updateProfile({
     String? name,
     String? photoFilePath,
@@ -84,16 +108,22 @@ class AuthRepository {
       photoData = 'data:image/jpeg;base64,${base64Encode(bytes)}';
     }
 
-    final data = <String, dynamic>{};
-    if (cleanName != null && cleanName.isNotEmpty) data['name'] = cleanName;
-    if (cleanPhone != null) data['phone'] = cleanPhone;
-    if (removePhoto) {
-      data['photoUrl'] = '';
-    } else if (photoData != null) {
-      data['photoUrl'] = photoData;
+    final publicData = <String, dynamic>{};
+    final privateData = <String, dynamic>{};
+    if (cleanName != null && cleanName.isNotEmpty) {
+      publicData['name'] = cleanName;
     }
-    if (data.isNotEmpty) {
-      await _firestore.updateDoc('users/$uid', data);
+    if (cleanPhone != null) privateData['phone'] = cleanPhone;
+    if (removePhoto) {
+      publicData['photoUrl'] = '';
+    } else if (photoData != null) {
+      publicData['photoUrl'] = photoData;
+    }
+    if (publicData.isNotEmpty) {
+      await _firestore.setDoc('public_profiles/$uid', publicData, merge: true);
+    }
+    if (privateData.isNotEmpty) {
+      await _firestore.setDoc('users/$uid', privateData, merge: true);
     }
     if (cleanName != null && cleanName.isNotEmpty) {
       await _authService.updateDisplayName(cleanName);
@@ -232,13 +262,13 @@ class AuthRepository {
       }
     }
 
-    await _firestore.deleteDoc('location_points/$uid');
     await _firestore.deleteDoc('users/$uid');
+    await _firestore.deleteDoc('public_profiles/$uid');
     await _authService.deleteAccount();
   }
 
   Future<String?> userName(String uid) async {
-    final data = await _firestore.getDoc('users/$uid');
+    final data = await _firestore.getDoc('public_profiles/$uid');
     return data?['name'] as String?;
   }
 
@@ -247,19 +277,13 @@ class AuthRepository {
   }
 
   Future<UserProfile?> userProfile(String uid) async {
-    final data = await _firestore.getDoc('users/$uid');
-    if (data == null) {
-      final name = uid == _authService.currentUserId
-          ? _authService.currentUserName
-          : null;
-      final email = uid == _authService.currentUserId
-          ? _authService.currentUserEmail
-          : null;
-      if (name == null && email == null) return null;
-      return UserProfile(uid: uid, name: name ?? 'Member', email: email ?? '');
-    }
-    final storedName = data['name'] as String?;
-    final storedEmail = data['email'] as String?;
+    final publicData = await _firestore.getDoc('public_profiles/$uid');
+    final privateData = uid == _authService.currentUserId
+        ? await _firestore.getDoc('users/$uid')
+        : null;
+    if (publicData == null && privateData == null) return null;
+    final storedName = publicData?['name'] as String?;
+    final storedEmail = privateData?['email'] as String?;
     final fallbackName = uid == _authService.currentUserId
         ? _authService.currentUserName
         : null;
@@ -274,8 +298,8 @@ class AuthRepository {
       email: storedEmail != null && storedEmail.trim().isNotEmpty
           ? storedEmail
           : fallbackEmail ?? '',
-      photoUrl: data['photoUrl'] as String?,
-      phone: data['phone'] as String?,
+      photoUrl: publicData?['photoUrl'] as String?,
+      phone: privateData?['phone'] as String?,
     );
   }
 

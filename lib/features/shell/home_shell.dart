@@ -36,6 +36,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ref.read(authRepositoryProvider).migrateLegacyProfile().catchError((_) {});
     _registerPushToken();
     _listenNotificationTaps();
     _listenCampaigns();
@@ -161,46 +162,49 @@ class _HomeShellState extends ConsumerState<HomeShell>
             ),
         ],
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_index == 0)
-            const BannerAdWidget(
-              key: ValueKey('home-bottom-banner'),
-              adUnitId: AdUnits.homeBanner,
-            ),
-          if (_index == 2)
-            const BannerAdWidget(
-              key: ValueKey('settings-bottom-banner'),
-              adUnitId: AdUnits.settingsBanner,
-            ),
-          if (_index == 1)
-            const BannerAdWidget(
-              key: ValueKey('groups-bottom-banner'),
-              adUnitId: AdUnits.groupsBanner,
-            ),
-          NavigationBar(
-            selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: [
-              NavigationDestination(
-                icon: Icon(Icons.map_outlined),
-                selectedIcon: Icon(Icons.map),
-                label: strings.map,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_index == 0)
+              const BannerAdWidget(
+                key: ValueKey('home-bottom-banner'),
+                adUnitId: AdUnits.homeBanner,
               ),
-              NavigationDestination(
-                icon: Icon(Icons.people_outline),
-                selectedIcon: Icon(Icons.people),
-                label: strings.groups,
+            if (_index == 2)
+              const BannerAdWidget(
+                key: ValueKey('settings-bottom-banner'),
+                adUnitId: AdUnits.settingsBanner,
               ),
-              NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: strings.settings,
+            if (_index == 1)
+              const BannerAdWidget(
+                key: ValueKey('groups-bottom-banner'),
+                adUnitId: AdUnits.groupsBanner,
               ),
-            ],
-          ),
-        ],
+            NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (i) => setState(() => _index = i),
+              destinations: [
+                NavigationDestination(
+                  icon: Icon(Icons.map_outlined),
+                  selectedIcon: Icon(Icons.map),
+                  label: strings.map,
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.people_outline),
+                  selectedIcon: Icon(Icons.people),
+                  label: strings.groups,
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings),
+                  label: strings.settings,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

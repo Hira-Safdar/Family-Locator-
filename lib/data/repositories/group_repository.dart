@@ -74,7 +74,16 @@ class GroupRepository {
       final ref = _firestore.collection('groups').doc(docId);
       final snap = await tx.get(ref);
       if (snap.exists) return null;
-      tx.set(ref, template.toJson()..['id'] = docId);
+      final data = template.toJson()..['id'] = docId;
+      tx.set(ref, data);
+      tx.set(_firestore.collection('invite_codes').doc(template.inviteCode), {
+        'groupId': docId,
+        'name': template.name,
+        'category': template.category,
+        'inviteCode': template.inviteCode,
+        'ownerId': template.ownerId,
+        'createdAt': template.createdAt,
+      });
       return docId;
     });
   }
@@ -134,36 +143,40 @@ class GroupRepository {
       if (uid == null) {
         throw const AuthFailure('You need to be signed in to join a group.');
       }
-      final snap = await _firestore
-          .collection('groups')
-          .where('inviteCode', isEqualTo: inviteCode)
-          .limit(1)
-          .get();
-      if (snap.docs.isEmpty) {
+      final invite = await _firestore.getDoc('invite_codes/$inviteCode');
+      if (invite == null) {
         throw const FirestoreFailure(
           'Invalid invite code. Please check the code and try again.',
         );
       }
-      final doc = snap.docs.first;
-      final group = GroupModel.fromJson(doc.data());
-      if (group.ownerId == uid) {
-        throw const GroupAlreadyMemberFailure(
-          'You are the owner of this group. You are already a part of it.',
-        );
+      final groupId = invite['groupId'] as String? ?? '';
+      final code = invite['inviteCode'] as String? ?? inviteCode;
+      if (groupId.isEmpty) {
+        throw const FirestoreFailure('This invite is no longer valid.');
       }
-      if (group.containsMember(uid)) {
-        throw const GroupAlreadyMemberFailure(
-          'You are already a member of this group.',
-        );
-      }
-      final newMember = <String>[...group.memberIds, uid];
-      await _firestore.runTransaction((ts) async {
-        final ref = _firestore.collection('groups').doc(group.id);
-        ts.update(ref, {
+      final requestId = '${code}_$uid';
+      await _firestore.setDoc('join_requests/$requestId', {
+        'code': code,
+        'groupId': groupId,
+        'uid': uid,
+      });
+      try {
+        await _firestore.updateDoc('groups/$groupId', {
           'memberIds': FieldValue.arrayUnion([uid]),
         });
-      });
-      return group.copyWith(memberIds: newMember);
+      } finally {
+        await _firestore.deleteDoc('join_requests/$requestId');
+      }
+      return GroupModel(
+        id: groupId,
+        name: invite['name'] as String? ?? 'Group',
+        category: invite['category'] as String? ?? GroupCategories.custom,
+        inviteCode: code,
+        ownerId: invite['ownerId'] as String? ?? '',
+        memberIds: [uid],
+        createdAt:
+            (invite['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      );
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
     } on Failure {
@@ -390,6 +403,10 @@ class GroupRepository {
         );
       }
       await _firestore.deleteDoc('groups/$groupId');
+      final inviteCode = data['inviteCode'] as String?;
+      if (inviteCode != null && inviteCode.isNotEmpty) {
+        await _firestore.deleteDoc('invite_codes/$inviteCode');
+      }
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
     } on Failure {
@@ -414,7 +431,29 @@ class GroupRepository {
   Stream<List<GroupModel>> getUserGroups() {
     final uid = _authService.currentUserId;
     if (uid == null) return Stream<List<GroupModel>>.value(const []);
-    return groupsContaining(uid);
+    return groupsContaining(uid).asyncMap((groups) async {
+      for (final group in groups) {
+        if (group.ownerId == uid) {
+          await ensureInviteCode(group);
+        }
+      }
+      return groups;
+    });
+  }
+
+  Future<void> ensureInviteCode(GroupModel group) async {
+    final existing = await _firestore.getDoc(
+      'invite_codes/${group.inviteCode}',
+    );
+    if (existing != null) return;
+    await _firestore.setDoc('invite_codes/${group.inviteCode}', {
+      'groupId': group.id,
+      'name': group.name,
+      'category': group.category,
+      'inviteCode': group.inviteCode,
+      'ownerId': group.ownerId,
+      'createdAt': group.createdAt,
+    });
   }
 
   Stream<GroupModel> groupStream(String groupId) {

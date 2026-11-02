@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/errors/failure.dart';
+import '../data/models/group_model.dart';
 import '../data/models/location_point.dart';
 import '../data/repositories/location_repository.dart';
 import '../data/services/background_service.dart';
@@ -8,6 +9,7 @@ import '../data/services/firebase_auth_services.dart';
 import '../data/services/firestore_services.dart';
 import '../data/services/location_service.dart';
 import 'auth_provider.dart';
+import 'group_provider.dart';
 import 'settings_provider.dart';
 
 final locationServicesProvider = Provider<LocationServices>((ref) {
@@ -21,7 +23,15 @@ final locationRepositoryProvider = Provider<LocationRepository>((ref) {
 final myLocationProvider = StreamProvider<LocationPoint?>((ref) {
   final uid = ref.watch(authStateProvider).value;
   if (uid == null) return Stream.empty();
-  return ref.watch(locationRepositoryProvider).latestPoint(uid);
+  final groups =
+      ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
+  if (groups.isEmpty) return Stream.value(null);
+  final selectedId = ref.watch(selectedGroupIdProvider);
+  final group = groups.firstWhere(
+    (item) => item.id == selectedId,
+    orElse: () => groups.first,
+  );
+  return ref.watch(locationRepositoryProvider).latestPoint(group.id, uid);
 });
 
 class IsSharing extends Notifier<bool> {

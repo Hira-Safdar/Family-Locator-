@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../data/models/alert_record.dart';
 import '../../data/models/group_model.dart';
@@ -50,15 +51,16 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
   @override
   Widget build(BuildContext context) {
     final alertsAsync = ref.watch(alertHistoryProvider);
+    final strings = AppLocalizations.of(context);
     final groups =
         ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alerts History'),
+        title: Text(strings.alertsHistory),
         actions: [
           IconButton(
-            tooltip: 'Clear history',
+            tooltip: strings.alertsClearHistory,
             icon: const Icon(Icons.delete_sweep_outlined),
             onPressed: _confirmClear,
           ),
@@ -66,19 +68,13 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
       ),
       body: alertsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => const Center(
-          child: Text(
-            'Could not load alerts. Please check your internet connection and try again.',
-            textAlign: TextAlign.center,
-          ),
+        error: (_, _) => Center(
+          child: Text(strings.couldNotLoadAlerts, textAlign: TextAlign.center),
         ),
         data: (all) {
           if (all.isEmpty) {
-            return const Center(
-              child: Text(
-                'No alerts yet.\nSend an SOS and it will appear here.',
-                textAlign: TextAlign.center,
-              ),
+            return Center(
+              child: Text(strings.noAlertsYet, textAlign: TextAlign.center),
             );
           }
           final alerts = _apply(all);
@@ -90,15 +86,15 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                 child: Wrap(
                   spacing: 8,
                   children: [
-                    _filterChip('All', _AlertFilter.all),
-                    _filterChip('Active', _AlertFilter.active),
-                    _filterChip('Resolved', _AlertFilter.resolved),
+                    _filterChip(strings.all, _AlertFilter.all),
+                    _filterChip(strings.active, _AlertFilter.active),
+                    _filterChip(strings.resolved, _AlertFilter.resolved),
                   ],
                 ),
               ),
               Expanded(
                 child: alerts.isEmpty
-                    ? const Center(child: Text('No alerts match this filter.'))
+                    ? Center(child: Text(strings.noAlertsMatch))
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: alerts.length,
@@ -136,6 +132,7 @@ class _AlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     final resolved = alert.resolvedAt != null;
     final accentColor = resolved
         ? context.palette.success
@@ -177,7 +174,7 @@ class _AlertCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    alert.name.isEmpty ? 'Unknown member' : alert.name,
+                    alert.name.isEmpty ? strings.unknownMember : alert.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium,
@@ -194,8 +191,8 @@ class _AlertCard extends StatelessWidget {
                     ),
                   const SizedBox(height: 4),
                   Text(
-                    'Sent ${DateFormatter.lastSeen(alert.createdAt)}'
-                    '${resolved ? ' · Resolved ${DateFormatter.lastSeen(alert.resolvedAt!)}' : ''}',
+                    '${strings.sentAt(DateFormatter.lastSeen(alert.createdAt))}'
+                    '${resolved ? ' · ${strings.resolvedAt(DateFormatter.lastSeen(alert.resolvedAt!))}' : ''}',
                     style: TextStyle(
                       fontSize: 12,
                       color: context.palette.textLight,
@@ -218,7 +215,7 @@ class _AlertCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    resolved ? 'Resolved' : 'Active',
+                    resolved ? strings.resolved : strings.active,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -265,22 +262,23 @@ class _ClearAlertsDialogState extends ConsumerState<_ClearAlertsDialog> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e is Failure ? e.message : 'Could not clear alerts.';
+        _error = e is Failure
+            ? e.message
+            : AppLocalizations.of(context).couldNotClearAlerts;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Clear alerts history?'),
+      title: Text(strings.clearAlertsQuestion),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'This removes all of your past SOS alerts. This cannot be undone.',
-          ),
+          Text(strings.clearAlertsDescription),
           if (_error != null) ...[
             const SizedBox(height: 12),
             Text(
@@ -295,7 +293,7 @@ class _ClearAlertsDialogState extends ConsumerState<_ClearAlertsDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(strings.cancel),
         ),
         TextButton(
           onPressed: _busy ? null : _clear,
@@ -305,7 +303,10 @@ class _ClearAlertsDialogState extends ConsumerState<_ClearAlertsDialog> {
                   width: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text('Clear', style: TextStyle(color: context.palette.error)),
+              : Text(
+                  strings.clear,
+                  style: TextStyle(color: context.palette.error),
+                ),
         ),
       ],
     );

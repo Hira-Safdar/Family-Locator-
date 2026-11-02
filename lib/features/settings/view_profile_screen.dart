@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
 import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
+import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/custom_button.dart';
 import '../../shared_widgets/profile_avatar.dart';
 
@@ -231,6 +233,8 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           label: strings.editProfile,
           onPressed: () => _startEdit(name, photoUrl, phone),
         ),
+        const SizedBox(height: 12),
+        const BannerAdWidget(adUnitId: AdUnits.profileBanner),
       ],
     );
   }
@@ -255,7 +259,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
                     }),
               icon: Icon(Icons.delete_outline, color: context.palette.error),
               label: Text(
-                'Remove photo',
+                AppLocalizations.of(context).removePhoto,
                 style: TextStyle(color: context.palette.error),
               ),
             ),
@@ -268,10 +272,10 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           maxLength: 40,
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
-            labelText: 'Display name',
+            labelText: AppLocalizations.of(context).displayName,
             counterText: '',
             errorText: _showNameError && name.isEmpty
-                ? 'Enter your name'
+                ? AppLocalizations.of(context).enterYourName
                 : null,
           ),
         ),
@@ -281,8 +285,8 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           enabled: !_locked,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            labelText: 'Phone (optional)',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).phoneOptional,
             prefixIcon: Icon(Icons.phone_outlined),
           ),
         ),
@@ -296,11 +300,17 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           ),
         ],
         const SizedBox(height: 24),
-        CustomButton(label: 'Save', isLoading: _locked, onPressed: _save),
+        CustomButton(
+          label: AppLocalizations.of(context).saveChanges,
+          isLoading: _locked,
+          onPressed: _save,
+        ),
         TextButton(
           onPressed: _locked ? null : _cancelEdit,
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
+        const SizedBox(height: 12),
+        const BannerAdWidget(adUnitId: AdUnits.profileEditBanner),
       ],
     );
   }

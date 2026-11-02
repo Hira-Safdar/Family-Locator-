@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/group_categories.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
+import '../../data/services/ads_service.dart';
 import '../../providers/group_provider.dart';
 import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/custom_button.dart';
@@ -155,6 +156,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
         category: widget.category,
       );
       if (mounted) {
+        AdsService.instance.showInterstitialIfAllowed();
         context.go(
           '/invite?code=${group.inviteCode}'
           '&name=${Uri.encodeComponent(group.name)}',
@@ -246,7 +248,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                     onPressed: _locked
                         ? null
                         : () => context.go('/choose-group'),
-                    child: const Text('Change'),
+                    child: Text(strings.change),
                   ),
                 ],
               ),
