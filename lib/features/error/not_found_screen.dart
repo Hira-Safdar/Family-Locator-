@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
 import '../../shared_widgets/custom_button.dart';
 
 class NotFoundScreen extends StatelessWidget {
@@ -11,6 +12,7 @@ class NotFoundScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
@@ -28,13 +30,13 @@ class NotFoundScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Page not found',
+                  strings.pageNotFound,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "We couldn't find $location.",
+                  strings.pageNotFoundAt(location),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: context.palette.textLight,
@@ -42,7 +44,7 @@ class NotFoundScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 CustomButton(
-                  label: 'Go home',
+                  label: strings.goHome,
                   onPressed: () => context.go('/home'),
                 ),
               ],

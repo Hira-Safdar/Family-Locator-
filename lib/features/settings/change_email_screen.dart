@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
 import '../../providers/auth_provider.dart';
+import '../../core/constants/app_strings.dart';
 import '../../shared_widgets/custom_button.dart';
 
 class ChangeEmailScreen extends ConsumerStatefulWidget {
@@ -32,19 +33,20 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
 
   String? _validateEmail(String email) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
-    return valid ? null : 'Enter a valid email';
+    return valid ? null : AppLocalizations.of(context).validEmail;
   }
 
   Future<void> _submit(String currentEmail) async {
+    final strings = AppLocalizations.of(context);
     final password = _passwordController.text;
     final email = _emailController.text.trim();
 
     final passwordError = password.isEmpty
-        ? 'Enter your current password'
+        ? strings.enterCurrentPassword
         : null;
     final emailError = _validateEmail(email);
     final same = email.toLowerCase() == currentEmail.toLowerCase()
-        ? 'This is already your email'
+        ? strings.alreadyYourEmail
         : null;
 
     if (passwordError != null || emailError != null || same != null) {
@@ -70,15 +72,12 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Check your inbox'),
-          content: Text(
-            'We sent a verification link to $email. '
-            'Your email changes after you open that link.',
-          ),
+          title: Text(strings.checkInbox),
+          content: Text(strings.emailVerification(email)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Done'),
+              child: Text(strings.done),
             ),
           ],
         ),
@@ -101,18 +100,19 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     final uid = ref.watch(authStateProvider).value;
     final currentEmail = uid == null
         ? ''
         : ref.watch(userProfileProvider(uid)).value?.email ?? '';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Change Email')),
+      appBar: AppBar(title: Text(strings.changeEmail)),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         children: [
           Text(
-            'For your security, enter your current password, then your new email address.',
+            strings.emailSecurity,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: context.palette.textLight),
@@ -125,7 +125,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Current: $currentEmail',
+                    strings.currentEmail(currentEmail),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -138,7 +138,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
             obscureText: !_showPassword,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
-              labelText: 'Current password',
+              labelText: strings.currentPassword,
               prefixIcon: const Icon(Icons.lock_outline),
               errorText: _passwordError,
               suffixIcon: IconButton(
@@ -161,7 +161,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
-              labelText: 'New email',
+              labelText: strings.newEmail,
               prefixIcon: const Icon(Icons.email_outlined),
               errorText: _emailError,
             ),
@@ -181,7 +181,7 @@ class _ChangeEmailScreenState extends ConsumerState<ChangeEmailScreen> {
           ],
           const SizedBox(height: 28),
           CustomButton(
-            label: 'Update Email',
+            label: strings.updateEmail,
             isLoading: _locked,
             onPressed: () => _submit(currentEmail),
           ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/password_validator.dart';
+import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared_widgets/custom_button.dart';
 
@@ -37,13 +38,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   Future<void> _submit() async {
+    final strings = AppLocalizations.of(context);
     final current = _currentController.text;
     final next = _newController.text;
     final confirm = _confirmController.text;
 
-    final currentError = current.isEmpty ? 'Enter your current password' : null;
+    final currentError = current.isEmpty ? strings.enterCurrentPassword : null;
     final newError = PasswordValidator.validate(next);
-    final confirmError = confirm != next ? 'Passwords do not match' : null;
+    final confirmError = confirm != next ? strings.passwordsMismatch : null;
 
     if (currentError != null || newError != null || confirmError != null) {
       setState(() {
@@ -68,14 +70,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Password changed'),
-          content: const Text(
-            'Use your new password the next time you sign in.',
-          ),
+          title: Text(strings.passwordChanged),
+          content: Text(strings.useNewPassword),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Done'),
+              child: Text(strings.done),
             ),
           ],
         ),
@@ -98,13 +98,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Change Password')),
+      appBar: AppBar(title: Text(strings.changePassword)),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         children: [
           Text(
-            'For your security, enter your current password, then choose a new one.',
+            strings.passwordSecurity,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: context.palette.textLight),
@@ -116,7 +117,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             obscureText: !_showCurrent,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
-              labelText: 'Current password',
+              labelText: strings.currentPassword,
               prefixIcon: const Icon(Icons.lock_outline),
               errorText: _currentError,
               suffixIcon: IconButton(
@@ -139,7 +140,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             obscureText: !_showNew,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
-              labelText: 'New password',
+              labelText: strings.newPassword,
               prefixIcon: const Icon(Icons.lock_reset_outlined),
               errorText: _newError,
               suffixIcon: IconButton(
@@ -162,7 +163,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             obscureText: !_showNew,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
-              labelText: 'Confirm new password',
+              labelText: strings.confirmNewPassword,
               prefixIcon: const Icon(Icons.lock_reset_outlined),
               errorText: _confirmError,
             ),
@@ -184,7 +185,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           ],
           const SizedBox(height: 28),
           CustomButton(
-            label: 'Update Password',
+            label: strings.updatePassword,
             isLoading: _locked,
             onPressed: _submit,
           ),

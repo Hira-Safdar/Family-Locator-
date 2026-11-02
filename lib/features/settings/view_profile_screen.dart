@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
+import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared_widgets/custom_button.dart';
 import '../../shared_widgets/profile_avatar.dart';
@@ -62,6 +63,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
   }
 
   Future<void> _showPhotoSheet() async {
+    final strings = AppLocalizations.of(context);
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -70,12 +72,12 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: Text(strings.chooseGallery),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take a photo'),
+              title: Text(strings.takePhoto),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
           ],
@@ -137,12 +139,13 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final uid = ref.watch(authStateProvider).value;
 
     if (uid == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('My Profile')),
+        appBar: AppBar(title: Text(strings.myProfile)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -150,14 +153,14 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
     final profileAsync = ref.watch(userProfileProvider(uid));
 
     return Scaffold(
-      appBar: AppBar(title: Text(_editing ? 'Edit Profile' : 'My Profile')),
+      appBar: AppBar(
+        title: Text(_editing ? strings.editProfile : strings.myProfile),
+      ),
       body: _editing
           ? _editBody(theme)
           : profileAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const Center(
-                child: Text('Could not load your profile. Please try again.'),
-              ),
+              error: (_, _) => Center(child: Text(strings.profileLoadFailed)),
               data: (profile) {
                 final name = profile?.name ?? '';
                 final email = profile?.email ?? '';
@@ -175,6 +178,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
     String email,
     String phone,
   ) {
+    final strings = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -185,7 +189,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
         const SizedBox(height: 20),
         Center(
           child: Text(
-            name.isEmpty ? 'Your profile' : name,
+            name.isEmpty ? strings.yourProfile : name,
             style: theme.textTheme.titleLarge,
           ),
         ),
@@ -224,7 +228,7 @@ class _ViewProfileScreenState extends ConsumerState<ViewProfileScreen> {
         ],
         const SizedBox(height: 32),
         CustomButton(
-          label: 'Edit Profile',
+          label: strings.editProfile,
           onPressed: () => _startEdit(name, photoUrl, phone),
         ),
       ],

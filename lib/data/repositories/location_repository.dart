@@ -17,11 +17,9 @@ class LocationRepository {
       throw const AuthFailure('You need to be signed in to change sharing.');
     }
     try {
-      await _firestore.setDoc(
-        'users/$uid',
-        {'sharingPaused': paused},
-        merge: true,
-      );
+      await _firestore.setDoc('users/$uid', {
+        'sharingPaused': paused,
+      }, merge: true);
     } on FirebaseException catch (e) {
       throw FirestoreFailure(_firestoreMessage(e));
     } catch (_) {
@@ -59,14 +57,11 @@ class LocationRepository {
   }
 
   Stream<LocationPoint?> latestPoint(String uid) {
-    return _firestore
-          .docStream('location_points/$uid')
-          .map((snap) {
-            final data = snap.data();
-            return data == null ? null : LocationPoint.fromJson(data);
-  
-  });
-}
+    return _firestore.docStream('location_points/$uid').map((snap) {
+      final data = snap.data();
+      return data == null ? null : LocationPoint.fromJson(data);
+    });
+  }
 
   String _firestoreMessage(FirebaseException e) {
     switch (e.code) {

@@ -7,6 +7,8 @@ import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/signup_screen.dart';
 import '../../features/error/not_found_screen.dart';
+import '../../features/onboarding/language_selection_screen.dart';
+import '../../features/onboarding/premium_screen.dart';
 import '../../features/group_setup/choose_group_screen.dart';
 import '../../features/group_setup/create_group_screen.dart';
 import '../../features/group_setup/invite_screen.dart';
@@ -35,9 +37,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loggedIn = authState.asData?.value != null;
 
       if (!loggedIn) {
+        if (state.matchedLocation == '/') return '/language';
         if (state.matchedLocation == '/login' ||
             state.matchedLocation == '/signup' ||
-            state.matchedLocation == '/forgot-password') {
+            state.matchedLocation == '/forgot-password' ||
+            state.matchedLocation == '/language' ||
+            state.matchedLocation == '/premium') {
           return null;
         }
         return '/login';
@@ -68,6 +73,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/language',
+        builder: (context, state) => const LanguageSelectionScreen(),
+      ),
+      GoRoute(
+        path: '/premium',
+        builder: (context, state) => const PremiumScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
       GoRoute(
@@ -107,7 +120,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/alert-map',
         builder: (context, state) => AlertMapScreen(
-          latitude: double.tryParse(state.uri.queryParameters['lat'] ?? '') ?? 0,
+          latitude:
+              double.tryParse(state.uri.queryParameters['lat'] ?? '') ?? 0,
           longitude:
               double.tryParse(state.uri.queryParameters['lng'] ?? '') ?? 0,
           name: state.uri.queryParameters['name'] ?? '',

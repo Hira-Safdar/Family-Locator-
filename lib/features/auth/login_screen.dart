@@ -24,17 +24,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _locked = false;
   bool _obscurePassword = true;
 
-  String? _validateEmail(String email) {
+  String? _validateEmail(String email, AppLocalizations strings) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
-    return valid ? null : 'Enter a valid email';
+    return valid ? null : strings.validEmail;
   }
 
   Future<void> _submit() async {
+    final strings = AppLocalizations.of(context);
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    final emailError = _validateEmail(email);
-    final passwordError = password.isEmpty ? 'Password cannot be empty' : null;
+    final emailError = _validateEmail(email, strings);
+    final passwordError = password.isEmpty ? strings.passwordEmpty : null;
     if (emailError != null || passwordError != null) {
       setState(() {
         _emailError = emailError;
@@ -61,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (_) {
       setState(() {
         _locked = false;
-        _serverError = 'Something went wrong. Please try again.';
+        _serverError = strings.somethingWrong;
       });
     }
   }
@@ -76,6 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -99,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to see your family on the map',
+                  strings.loginSubtitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: context.palette.textLight,
@@ -112,7 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: strings.email,
                     prefixIcon: const Icon(Icons.email_outlined),
                     errorText: _emailError,
                   ),
@@ -127,7 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: strings.password,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -151,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push('/forgot-password'),
-                    child: const Text('Forgot password?'),
+                    child: Text(strings.forgotPassword),
                   ),
                 ),
                 if (_serverError != null) ...[
@@ -166,7 +168,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ],
                 const SizedBox(height: 24),
                 CustomButton(
-                  label: 'Sign In',
+                  label: strings.signIn,
                   isLoading: authState.isLoading,
                   onPressed: _submit,
                 ),
@@ -174,10 +176,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account?"),
+                    Text(strings.noAccount),
                     TextButton(
                       onPressed: () => context.go('/signup'),
-                      child: const Text('Sign Up'),
+                      child: Text(strings.signUp),
                     ),
                   ],
                 ),

@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/constants/app_strings.dart';
 
 class OfflineView extends StatelessWidget {
-  const OfflineView({
-    super.key,
-    this.onRetry,
-    this.title = 'No internet connection',
-    this.subtitle = 'Check your connection and try again.',
-  });
+  const OfflineView({super.key, this.onRetry, this.title, this.subtitle});
 
   final VoidCallback? onRetry;
-  final String title;
-  final String subtitle;
+  final String? title;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +22,7 @@ class OfflineView extends StatelessWidget {
             Icon(Icons.wifi_off, size: 64, color: context.palette.textLight),
             const SizedBox(height: 16),
             Text(
-              title,
+              title ?? AppLocalizations.of(context).noInternet,
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -34,7 +30,7 @@ class OfflineView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              subtitle,
+              subtitle ?? AppLocalizations.of(context).checkConnection,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: context.palette.textLight,
@@ -49,7 +45,7 @@ class OfflineView extends StatelessWidget {
                 ),
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+                label: Text(AppLocalizations.of(context).tryAgain),
               ),
             ],
           ],

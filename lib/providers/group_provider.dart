@@ -10,17 +10,17 @@ final firestoreServicesProvider = Provider<FirestoreServices>((ref) {
 });
 
 final groupRepositoryProvider = Provider<GroupRepository>((ref) {
-  return GroupRepository(
-    FirestoreServices(),
-    FirebaseAuthServices(),
-  );
+  return GroupRepository(FirestoreServices(), FirebaseAuthServices());
 });
 
 final myGroupsStreamProvider = StreamProvider<List<GroupModel>>((ref) {
   return ref.watch(groupRepositoryProvider).getUserGroups();
 });
 
-final groupStreamProvider = StreamProvider.family<GroupModel, String>((ref, groupId) {
+final groupStreamProvider = StreamProvider.family<GroupModel, String>((
+  ref,
+  groupId,
+) {
   return ref.watch(groupRepositoryProvider).groupStream(groupId);
 });
 
@@ -73,8 +73,9 @@ class GroupController extends AsyncNotifier<void> {
   }
 }
 
-final groupControllerProvider =
-    AsyncNotifierProvider<GroupController, void>(GroupController.new);
+final groupControllerProvider = AsyncNotifierProvider<GroupController, void>(
+  GroupController.new,
+);
 
 class SelectedGroupId extends Notifier<String?> {
   @override
@@ -83,10 +84,13 @@ class SelectedGroupId extends Notifier<String?> {
   void select(String? id) => state = id;
 }
 
-final selectedGroupIdProvider =
-    NotifierProvider<SelectedGroupId, String?>(SelectedGroupId.new);
+final selectedGroupIdProvider = NotifierProvider<SelectedGroupId, String?>(
+  SelectedGroupId.new,
+);
 
-final memberGroupsProvider =
-    StreamProvider.family<List<GroupModel>, String>((ref, uid) {
+final memberGroupsProvider = StreamProvider.family<List<GroupModel>, String>((
+  ref,
+  uid,
+) {
   return ref.watch(groupRepositoryProvider).groupsContaining(uid);
 });

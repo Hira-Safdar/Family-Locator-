@@ -11,6 +11,9 @@ import '../../providers/campaign_banner_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../shared_widgets/campaign_banner.dart';
+import '../../shared_widgets/banner_ad_widget.dart';
+import '../../core/constants/ad_units.dart';
+import '../../core/constants/app_strings.dart';
 import '../group_setup/groups_screen.dart';
 import '../home_map/home_map_screen.dart';
 import '../settings/settings_screen.dart';
@@ -61,9 +64,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
       ref
           .read(notificationServiceProvider)
           .showCampaign(title: title, body: body);
-      ref
-          .read(campaignBannerProvider.notifier)
-          .show(title: title, body: body);
+      ref.read(campaignBannerProvider.notifier).show(title: title, body: body);
     });
   }
 
@@ -131,6 +132,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
   @override
   Widget build(BuildContext context) {
     final banner = ref.watch(campaignBannerProvider);
+    final strings = AppLocalizations.of(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -159,24 +161,44 @@ class _HomeShellState extends ConsumerState<HomeShell>
             ),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map),
-            label: 'Map',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: 'Groups',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_index == 0)
+            const BannerAdWidget(
+              key: ValueKey('home-bottom-banner'),
+              adUnitId: AdUnits.homeBanner,
+            ),
+          if (_index == 2)
+            const BannerAdWidget(
+              key: ValueKey('settings-bottom-banner'),
+              adUnitId: AdUnits.settingsBanner,
+            ),
+          if (_index == 1)
+            const BannerAdWidget(
+              key: ValueKey('groups-bottom-banner'),
+              adUnitId: AdUnits.groupsBanner,
+            ),
+          NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: [
+              NavigationDestination(
+                icon: Icon(Icons.map_outlined),
+                selectedIcon: Icon(Icons.map),
+                label: strings.map,
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.people_outline),
+                selectedIcon: Icon(Icons.people),
+                label: strings.groups,
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: strings.settings,
+              ),
+            ],
           ),
         ],
       ),

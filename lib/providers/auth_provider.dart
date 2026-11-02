@@ -85,7 +85,9 @@ class AuthController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     try {
-      await ref.read(authRepositoryProvider).updateProfile(
+      await ref
+          .read(authRepositoryProvider)
+          .updateProfile(
             name: name,
             photoFilePath: photoFilePath,
             phone: phone,
@@ -104,10 +106,9 @@ class AuthController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     try {
-      await ref.read(authRepositoryProvider).changeEmail(
-            currentPassword: currentPassword,
-            newEmail: newEmail,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .changeEmail(currentPassword: currentPassword, newEmail: newEmail);
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

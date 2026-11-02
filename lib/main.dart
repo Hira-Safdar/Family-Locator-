@@ -1,9 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/services/ads_service.dart';
 import 'data/services/background_service.dart';
 import 'data/services/notification_service.dart';
 import 'providers/notification_provider.dart';
@@ -17,7 +18,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
   await initializeBackgroundService();
-  await MobileAds.instance.initialize();
+  await AdsService.instance.initialize();
   final prefs = await SharedPreferences.getInstance();
   final notifications = NotificationService();
   await notifications.init();
@@ -42,11 +43,21 @@ class FamilyApp extends ConsumerWidget {
     final themeMode = ref.watch(
       settingsProvider.select((settings) => settings.themeMode),
     );
+    final locale = ref.watch(
+      settingsProvider.select((settings) => settings.locale),
+    );
     return MaterialApp.router(
       title: AppStrings.appName,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
+      locale: locale,
+      supportedLocales: const [Locale('en'), Locale('ur')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: router,
     );
   }

@@ -248,11 +248,32 @@ class AuthRepository {
 
   Future<UserProfile?> userProfile(String uid) async {
     final data = await _firestore.getDoc('users/$uid');
-    if (data == null) return null;
+    if (data == null) {
+      final name = uid == _authService.currentUserId
+          ? _authService.currentUserName
+          : null;
+      final email = uid == _authService.currentUserId
+          ? _authService.currentUserEmail
+          : null;
+      if (name == null && email == null) return null;
+      return UserProfile(uid: uid, name: name ?? 'Member', email: email ?? '');
+    }
+    final storedName = data['name'] as String?;
+    final storedEmail = data['email'] as String?;
+    final fallbackName = uid == _authService.currentUserId
+        ? _authService.currentUserName
+        : null;
+    final fallbackEmail = uid == _authService.currentUserId
+        ? _authService.currentUserEmail
+        : null;
     return UserProfile(
       uid: uid,
-      name: (data['name'] as String?) ?? 'Member',
-      email: (data['email'] as String?) ?? '',
+      name: storedName != null && storedName.trim().isNotEmpty
+          ? storedName
+          : fallbackName ?? 'Member',
+      email: storedEmail != null && storedEmail.trim().isNotEmpty
+          ? storedEmail
+          : fallbackEmail ?? '',
       photoUrl: data['photoUrl'] as String?,
       phone: data['phone'] as String?,
     );

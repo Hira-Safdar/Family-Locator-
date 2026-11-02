@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_strings.dart';
 
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.message, this.onRetry});
@@ -13,12 +14,11 @@ class ErrorView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(message, textAlign: TextAlign.center),
-          if(onRetry != null)
+          if (onRetry != null)
             TextButton(
               onPressed: onRetry,
-              child: const Text('Retry'),
-            )
-            
+              child: Text(AppLocalizations.of(context).retry),
+            ),
         ],
       ),
     );

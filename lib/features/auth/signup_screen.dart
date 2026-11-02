@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/errors/failure.dart';
 import '../../core/utils/password_validator.dart';
+import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared_widgets/custom_button.dart';
 
@@ -30,30 +31,31 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   bool _obscureConfirm = true;
   bool _agreed = false;
 
-  String? _validateEmail(String email) {
+  String? _validateEmail(String email, AppLocalizations strings) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
-    return valid ? null : 'Enter a valid email';
+    return valid ? null : strings.validEmail;
   }
 
   String? _validatePassword(String password) =>
       PasswordValidator.validate(password);
 
   Future<void> _submit() async {
+    final strings = AppLocalizations.of(context);
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    final nameError = name.isEmpty ? 'Name cannot be empty' : null;
-    final emailError = _validateEmail(email);
+    final nameError = name.isEmpty ? strings.nameEmpty : null;
+    final emailError = _validateEmail(email, strings);
     final passwordError = password.isEmpty
-        ? 'Password cannot be empty'
+        ? strings.passwordEmpty
         : _validatePassword(password);
     final confirmError = _confirmController.text.isEmpty
-        ? 'Confirm your password'
+        ? strings.confirmPasswordPrompt
         : (_confirmController.text != password
-              ? 'Passwords do not match'
+              ? strings.passwordsMismatch
               : null);
-    final termsError = _agreed ? null : 'Please accept the Terms to continue';
+    final termsError = _agreed ? null : strings.termsContinue;
     if (nameError != null ||
         emailError != null ||
         passwordError != null ||
@@ -77,11 +79,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     final controller = ref.read(authControllerProvider.notifier);
     try {
-      await controller.signUp(
-        name: name,
-        email: email,
-        password: password,
-      );
+      await controller.signUp(name: name, email: email, password: password);
       if (mounted) context.go('/home');
     } on Failure catch (e) {
       setState(() {
@@ -91,7 +89,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     } catch (_) {
       setState(() {
         _locked = false;
-        _serverError = 'Something went wrong. Please try again.';
+        _serverError = strings.somethingWrong;
       });
     }
   }
@@ -108,6 +106,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(),
@@ -119,9 +118,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Create your account',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  strings.createAccount,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: 24),
 
                 TextField(
@@ -129,7 +130,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   enabled: !_locked,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Full Name',
+                    labelText: strings.fullName,
                     prefixIcon: const Icon(Icons.person_outline),
                     errorText: _nameError,
                   ),
@@ -145,7 +146,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: strings.email,
                     prefixIcon: const Icon(Icons.email_outlined),
                     errorText: _emailError,
                   ),
@@ -161,7 +162,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: strings.password,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -188,7 +189,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   obscureText: _obscureConfirm,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
+                    labelText: strings.confirmPassword,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -221,9 +222,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  title: const Text(
-                    'I agree to the Terms of Service and Privacy Policy',
-                  ),
+                  title: Text(strings.termsAgreement),
                   subtitle: _termsError == null
                       ? null
                       : Text(
@@ -238,13 +237,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   Text(
                     _serverError!,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 24),
 
                 CustomButton(
-                  label: 'Sign Up',
+                  label: strings.signUp,
                   isLoading: authState.isLoading,
                   onPressed: _submit,
                 ),
@@ -253,10 +254,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Already have an account?'),
+                    Text(strings.alreadyAccount),
                     TextButton(
                       onPressed: () => context.go('/login'),
-                      child: const Text('Sign In'),
+                      child: Text(strings.signIn),
                     ),
                   ],
                 ),

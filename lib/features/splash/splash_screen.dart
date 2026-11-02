@@ -14,11 +14,7 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.family_restroom,
-              size: 72,
-              color: Colors.white,
-            ),
+            const Icon(Icons.family_restroom, size: 72, color: Colors.white),
             const SizedBox(height: 20),
             Text(
               AppStrings.appName,

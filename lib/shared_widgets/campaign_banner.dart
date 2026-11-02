@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../core/constants/app_strings.dart';
 
 import '../core/constants/app_colors.dart';
 
@@ -92,7 +93,7 @@ class _CampaignBannerState extends State<CampaignBanner> {
                 onPressed: widget.onDismiss,
                 icon: const Icon(Icons.close),
                 iconSize: 20,
-                tooltip: 'Dismiss',
+                tooltip: AppLocalizations.of(context).dismiss,
               ),
             ],
           ),

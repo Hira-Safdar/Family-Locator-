@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/group_categories.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../providers/group_provider.dart';
+import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/custom_button.dart';
 
 class CreateGroupScreen extends ConsumerStatefulWidget {
@@ -175,9 +178,23 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(groupControllerProvider);
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Group')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: strings.back,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/choose-group');
+            }
+          },
+        ),
+        title: Text(strings.newGroup),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -239,7 +256,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                 enabled: !_locked,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
-                  labelText: 'Group name',
+                  labelText: strings.groupName,
                   prefixIcon: const Icon(Icons.group_outlined),
                   errorText: _nameError,
                 ),
@@ -275,10 +292,12 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
               ],
               const SizedBox(height: 24),
               CustomButton(
-                label: 'Create Group',
+                label: strings.createGroup,
                 isLoading: state.isLoading || _locked,
                 onPressed: _submit,
               ),
+              const SizedBox(height: 12),
+              const BannerAdWidget(adUnitId: AdUnits.groupSetupBanner),
             ],
           ),
         ),

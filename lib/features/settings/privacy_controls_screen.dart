@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
+import '../../core/constants/app_strings.dart';
 import '../../providers/location_provider.dart';
 
 class PrivacyControlsScreen extends ConsumerStatefulWidget {
@@ -38,23 +39,21 @@ class _PrivacyControlsScreenState extends ConsumerState<PrivacyControlsScreen> {
   }
 
   Future<void> _clearHistory() async {
+    final strings = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear location history?'),
-        content: const Text(
-          'This removes your latest saved location from the map. '
-          'Your friends will stop seeing your pin until you share again.',
-        ),
+        title: Text(strings.clearHistoryQuestion),
+        content: Text(strings.clearHistoryDescription),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(strings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: TextButton.styleFrom(foregroundColor: context.palette.error),
-            child: const Text('Clear'),
+            child: Text(strings.clearLocationHistory),
           ),
         ],
       ),
@@ -75,9 +74,7 @@ class _PrivacyControlsScreenState extends ConsumerState<PrivacyControlsScreen> {
       if (!mounted) return;
       setState(() {
         _clearing = false;
-        _error = e is Failure
-            ? e.message
-            : 'Could not clear your location history.';
+        _error = e is Failure ? e.message : strings.somethingWrong;
       });
     }
   }
@@ -85,35 +82,32 @@ class _PrivacyControlsScreenState extends ConsumerState<PrivacyControlsScreen> {
   @override
   Widget build(BuildContext context) {
     final sharing = ref.watch(isSharingProvider);
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Privacy Controls')),
+      appBar: AppBar(title: Text(strings.privacyControls)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          _sectionHeader(context, 'Sharing'),
+          _sectionHeader(context, strings.sharing),
           SwitchListTile(
             secondary: const Icon(Icons.my_location),
-            title: const Text('Share my location'),
+            title: Text(strings.shareMyLocation),
             subtitle: Text(
-              sharing
-                  ? 'Your location updates are live'
-                  : 'Location sharing is paused',
+              sharing ? strings.locationLive : strings.sharingPaused,
             ),
             value: sharing,
             onChanged: (v) => _toggleSharing(v),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
 
-          _sectionHeader(context, 'Location History'),
+          _sectionHeader(context, strings.locationHistory),
           ListTile(
             enabled: !_clearing,
             leading: Icon(Icons.delete_outline, color: context.palette.error),
-            title: const Text('Clear my location history'),
+            title: Text(strings.clearLocationHistory),
             subtitle: Text(
-              _clearing
-                  ? 'Clearing...'
-                  : 'Removes your saved location from the map',
+              _clearing ? strings.clearing : strings.removeSavedLocation,
             ),
             trailing: _clearing
                 ? const SizedBox(
@@ -129,7 +123,7 @@ class _PrivacyControlsScreenState extends ConsumerState<PrivacyControlsScreen> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Location history cleared.',
+                strings.locationHistoryCleared,
                 style: TextStyle(color: context.palette.success, fontSize: 13),
               ),
             ),

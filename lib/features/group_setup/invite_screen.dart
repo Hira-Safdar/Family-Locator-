@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/invite_share.dart';
+import '../../core/constants/app_strings.dart';
 import '../../shared_widgets/custom_button.dart';
 
 class InviteScreen extends StatelessWidget {
@@ -18,9 +19,10 @@ class InviteScreen extends StatelessWidget {
       data: code,
       errorCorrectLevel: QrErrorCorrectLevel.M,
     );
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Invite Members')),
+      appBar: AppBar(title: Text(strings.inviteMembers)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -34,7 +36,7 @@ class InviteScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Group created!',
+                strings.groupCreated,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
@@ -46,7 +48,7 @@ class InviteScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Share this code or QR with the people you want to add.',
+                strings.shareCode,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: context.palette.textLight,
@@ -113,17 +115,17 @@ class InviteScreen extends StatelessWidget {
                 ),
                 onPressed: () => copyInviteCode(context, code),
                 icon: const Icon(Icons.copy),
-                label: const Text('Copy code'),
+                label: Text(strings.copyCode),
               ),
               const SizedBox(height: 12),
               CustomButton(
-                label: 'Share invite',
+                label: strings.shareInvite,
                 onPressed: () => shareInvite(groupName: name, inviteCode: code),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => context.go('/home'),
-                child: const Text('Done'),
+                child: Text(strings.done),
               ),
             ],
           ),

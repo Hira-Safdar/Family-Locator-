@@ -28,6 +28,23 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  // The same 12-color warm palette is used on every device. Green is reserved
+  // for the signed-in user's own marker.
+  static const _memberMarkerHues = <double>[
+    0,
+    8,
+    16,
+    24,
+    32,
+    40,
+    48,
+    56,
+    330,
+    338,
+    346,
+    354,
+  ];
+
   static final LatLng _fallback = LatLng(30.3753, 69.3451);
 
   GoogleMapController? _mapController;
@@ -36,6 +53,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   LocationPoint? _selectedPoint;
   final Set<String> _notifiedSos = {};
   ProviderSubscription<AsyncValue<List<GroupModel>>>? _groupsSub;
+
+  static double _markerHueForMember(String uid) {
+    var hash = 2166136261;
+    for (final codeUnit in uid.codeUnits) {
+      hash = ((hash ^ codeUnit) * 16777619) & 0xFFFFFFFF;
+    }
+    return _memberMarkerHues[hash % _memberMarkerHues.length];
+  }
 
   @override
   void initState() {
@@ -129,15 +154,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     groupLocations.forEach((uid, point) {
       if (uid == selfUid) return;
-      final selected = uid == _selectedUid;
       markers.add(
         Marker(
           markerId: MarkerId(uid),
           position: LatLng(point.latitude, point.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            selected ? BitmapDescriptor.hueRed : BitmapDescriptor.hueOrange,
-          ),
-          zIndexInt: selected ? 3 : 2,
+          icon: BitmapDescriptor.defaultMarkerWithHue(_markerHueForMember(uid)),
+          zIndexInt: uid == _selectedUid ? 3 : 2,
           onTap: () => setState(() {
             _selectedUid = uid;
             _selectedPoint = point;
@@ -160,48 +182,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             compassEnabled: true,
           ),
 
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Container(
-                height: 56,
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: context.palette.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.family_restroom, color: context.palette.primary),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Live Tracking',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const Spacer(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
           if (hasError)
             Align(
               alignment: Alignment.topCenter,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   12,
-                  activeGroup?.sos != null ? 148 : 84,
+                  activeGroup?.sos != null ? 84 : 12,
                   12,
                   12,
                 ),
@@ -226,7 +213,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Align(
               alignment: Alignment.topCenter,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 84, 12, 12),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 child: _sosBanner(activeGroup!, selfUid),
               ),
             ),

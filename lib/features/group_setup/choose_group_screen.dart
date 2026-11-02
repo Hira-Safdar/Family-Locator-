@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/group_categories.dart';
+import '../../core/constants/app_strings.dart';
+import '../../shared_widgets/banner_ad_widget.dart';
 
 class ChooseGroupScreen extends StatefulWidget {
   const ChooseGroupScreen({super.key});
@@ -37,8 +40,22 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose Group')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: strings.back,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+        ),
+        title: Text(strings.chooseGroup),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -46,7 +63,7 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
               child: Text(
-                'What kind of group are you creating?',
+                strings.groupQuestion,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
@@ -54,14 +71,17 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 children: [
-                  for (final category in GroupCategories.all)
+                  for (final category in GroupCategories.all) ...[
                     _CategoryCard(
-                      category: category,
+                      category: strings.categoryName(category),
                       icon: _icons[category] ?? Icons.group_outlined,
-                      hint: _hints[category] ?? '',
+                      hint: strings.categoryHint(_hints[category] ?? ''),
                       selected: _selected == category,
                       onTap: () => setState(() => _selected = category),
                     ),
+                    if (category == GroupCategories.school)
+                      _AdvertisementCard(label: strings.advertisement),
+                  ],
                 ],
               ),
             ),
@@ -73,6 +93,44 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertisementCard extends StatelessWidget {
+  const _AdvertisementCard({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Material(
+        color: context.palette.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: context.palette.textLight.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.campaign_outlined, color: context.palette.primary),
+                  const SizedBox(width: 14),
+                  Text(label, style: Theme.of(context).textTheme.titleMedium),
+                ],
+              ),
+              const BannerAdWidget(adUnitId: AdUnits.groupSetupBanner),
+            ],
+          ),
         ),
       ),
     );

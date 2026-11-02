@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_config.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
+import '../../core/constants/app_strings.dart';
 import '../../providers/group_provider.dart';
+import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/custom_button.dart';
 
 class JoinGroupScreen extends ConsumerStatefulWidget {
@@ -44,14 +47,16 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) {
       setState(() {
-        _codeError = 'Enter the invite code';
+        _codeError = AppLocalizations.of(context).enterInviteCode;
         _serverError = null;
       });
       return;
     }
     if (code.length != AppConfig.inviteCodelength) {
       setState(() {
-        _codeError = 'Code must be ${AppConfig.inviteCodelength} characters';
+        _codeError = AppLocalizations.of(
+          context,
+        ).codeLength(AppConfig.inviteCodelength);
         _serverError = null;
       });
       return;
@@ -73,7 +78,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
     } catch (_) {
       setState(() {
         _locked = false;
-        _serverError = 'Something went wrong. Please try again.';
+        _serverError = AppLocalizations.of(context).somethingWrong;
       });
     }
   }
@@ -81,9 +86,10 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(groupControllerProvider);
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Join Group')),
+      appBar: AppBar(title: Text(strings.joinGroup)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -93,7 +99,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
               const Icon(Icons.group_add, size: 72),
               const SizedBox(height: 16),
               Text(
-                'Ask a family member for their invite code',
+                strings.askInvite,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
@@ -105,7 +111,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                 textInputAction: TextInputAction.done,
                 maxLength: AppConfig.inviteCodelength,
                 decoration: InputDecoration(
-                  labelText: 'Invite code',
+                  labelText: strings.inviteCode,
                   prefixIcon: const Icon(Icons.key),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.qr_code_scanner),
@@ -128,7 +134,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
               ],
               const SizedBox(height: 24),
               CustomButton(
-                label: 'Join Group',
+                label: strings.joinGroup,
                 isLoading: state.isLoading,
                 onPressed: _submit,
               ),
@@ -144,8 +150,10 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                 ),
                 onPressed: _locked ? null : _scanQr,
                 icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Scan QR Code'),
+                label: Text(strings.scanQr),
               ),
+              const SizedBox(height: 12),
+              const BannerAdWidget(adUnitId: AdUnits.groupSetupBanner),
             ],
           ),
         ),
@@ -193,14 +201,16 @@ class _ScanQrDialogState extends State<_ScanQrDialog> {
                     const SizedBox(height: 12),
                     Text(
                       denied
-                          ? 'Camera permission deny hai.\nPhone Settings > Family Locator > Camera allow karo, phir dobara try karo.'
-                          : 'Camera open nahi ho saka (${error.errorCode.name}).',
+                          ? AppLocalizations.of(context).cameraPermissionMessage
+                          : AppLocalizations.of(
+                              context,
+                            ).cameraOpenFailed(error.errorCode.name),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
+                      child: Text(AppLocalizations.of(context).closeCamera),
                     ),
                   ],
                 ),

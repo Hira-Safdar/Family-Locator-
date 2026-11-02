@@ -21,9 +21,12 @@ Stream<Map<String, LocationPoint>> _locationsFor(
   );
 }
 
-final memberLocationsProvider = StreamProvider<Map<String, LocationPoint>>((ref) {
+final memberLocationsProvider = StreamProvider<Map<String, LocationPoint>>((
+  ref,
+) {
   final repo = ref.watch(locationRepositoryProvider);
-  final groups = ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
+  final groups =
+      ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
   if (groups.isEmpty) return Stream.value(const <String, LocationPoint>{});
 
   final selectedId = ref.watch(selectedGroupIdProvider);
@@ -37,18 +40,19 @@ final memberLocationsProvider = StreamProvider<Map<String, LocationPoint>>((ref)
 
 final groupMemberLocationsProvider =
     StreamProvider.family<Map<String, LocationPoint>, String>((ref, groupId) {
-  final repo = ref.watch(locationRepositoryProvider);
-  final groups = ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
-  GroupModel? group;
-  for (final g in groups) {
-    if (g.id == groupId) {
-      group = g;
-      break;
-    }
-  }
-  if (group == null) return Stream.value(const <String, LocationPoint>{});
-  return _locationsFor(group.memberIds, repo);
-});
+      final repo = ref.watch(locationRepositoryProvider);
+      final groups =
+          ref.watch(myGroupsStreamProvider).value ?? const <GroupModel>[];
+      GroupModel? group;
+      for (final g in groups) {
+        if (g.id == groupId) {
+          group = g;
+          break;
+        }
+      }
+      if (group == null) return Stream.value(const <String, LocationPoint>{});
+      return _locationsFor(group.memberIds, repo);
+    });
 
 Stream<Map<String, LocationPoint?>> _combineMemberLocations(
   List<String> memberIds,
@@ -79,9 +83,7 @@ Stream<Map<String, LocationPoint?>> _combineMemberLocations(
   }
 }
 
-Stream<LocationPoint?> _withRetry(
-  Stream<LocationPoint?> Function() source,
-) {
+Stream<LocationPoint?> _withRetry(Stream<LocationPoint?> Function() source) {
   const maxAttempts = 5;
   final controller = StreamController<LocationPoint?>();
   StreamSubscription<LocationPoint?>? sub;

@@ -17,9 +17,7 @@ class AlertMapScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final target = LatLng(latitude, longitude);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(name.isEmpty ? 'Alert location' : name),
-      ),
+      appBar: AppBar(title: Text(name.isEmpty ? 'Alert location' : name)),
       body: GoogleMap(
         initialCameraPosition: CameraPosition(target: target, zoom: 16),
         markers: {

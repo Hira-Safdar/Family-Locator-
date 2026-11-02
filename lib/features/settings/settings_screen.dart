@@ -6,14 +6,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_config.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/profile_avatar.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -58,11 +57,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     });
   }
 
-  String get _locationLabel {
-    if (_always.isGranted) return 'Always allowed';
-    if (_whenInUse.isGranted) return 'While using the app';
-    if (_whenInUse.isPermanentlyDenied) return 'Denied';
-    return 'Not allowed';
+  String _locationLabel(AppLocalizations strings) {
+    if (_always.isGranted) return strings.alwaysAllowed;
+    if (_whenInUse.isGranted) return strings.whileUsing;
+    if (_whenInUse.isPermanentlyDenied) return strings.denied;
+    return strings.notAllowed;
   }
 
   Color get _locationColor {
@@ -79,10 +78,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     return Icons.warning_amber;
   }
 
-  String _intervalLabel(int seconds) =>
-      seconds >= 60 ? 'Every ${seconds ~/ 60} min' : 'Every $seconds seconds';
+  String _intervalLabel(int seconds, AppLocalizations strings) => seconds >= 60
+      ? strings.everyMinutes(seconds ~/ 60)
+      : strings.everySeconds(seconds);
 
   Future<void> _showRefreshSheet() async {
+    final strings = AppLocalizations.of(context);
     final current = ref.read(settingsProvider).refreshSeconds;
     final picked = await showModalBottomSheet<int>(
       context: context,
@@ -92,7 +93,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           children: [
             for (final option in _intervals)
               ListTile(
-                title: Text(_intervalLabel(option)),
+                title: Text(_intervalLabel(option, strings)),
                 trailing: option == current
                     ? Icon(Icons.check, color: context.palette.primary)
                     : null,
@@ -231,25 +232,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(strings.settings)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           _profileHeader(context),
-          _sectionHeader(context, 'Manage Permissions'),
+          _sectionHeader(context, strings.managePermissions),
           ListTile(
             leading: const Icon(Icons.location_on_outlined),
-            title: const Text('Location Permission'),
-            subtitle: Text(_locationLabel),
+            title: Text(strings.locationPermission),
+            subtitle: Text(_locationLabel(strings)),
             trailing: Icon(_locationIcon, color: _locationColor),
             onTap: openAppSettings,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.brightness_6_outlined),
-            title: const Text('Appearance'),
+            title: Text(strings.appearance),
             subtitle: Text(_themeModeLabel(settings.themeMode)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _pickThemeMode(settings.themeMode),
@@ -257,41 +259,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           const Divider(height: 1, indent: 16, endIndent: 16),
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
-            title: const Text('Notifications'),
-            subtitle: const Text('SOS alerts and announcements'),
+            title: Text(strings.notifications),
+            subtitle: Text(strings.sosAlerts),
             value: settings.notificationsEnabled,
             onChanged: _setNotifications,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.shield_outlined),
-            title: const Text('Privacy Controls'),
-            subtitle: const Text('Pause sharing or clear history'),
+            title: Text(strings.privacyControls),
+            subtitle: Text(strings.pauseSharing),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/privacy'),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
 
-          _sectionHeader(context, 'General'),
+          _sectionHeader(context, strings.general),
           ListTile(
             leading: const Icon(Icons.sync),
-            title: const Text('Location Refresh'),
-            subtitle: Text(_intervalLabel(settings.refreshSeconds)),
+            title: Text(strings.locationRefresh),
+            subtitle: Text(_intervalLabel(settings.refreshSeconds, strings)),
             trailing: const Icon(Icons.chevron_right),
             onTap: _showRefreshSheet,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.history),
-            title: const Text('Alerts History'),
-            subtitle: const Text('Past SOS alerts'),
+            title: Text(strings.alertsHistory),
+            subtitle: Text(strings.pastSos),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/alerts'),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.email_outlined),
-            title: const Text('Change Email'),
+            title: Text(strings.changeEmail),
             subtitle: const Text('Update your account email'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/change-email'),
@@ -299,7 +301,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.password_outlined),
-            title: const Text('Change Password'),
+            title: Text(strings.changePassword),
             subtitle: const Text('Update your account password'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/change-password'),
@@ -308,52 +310,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ListTile(
             leading: Icon(Icons.delete_outline, color: context.palette.error),
             title: Text(
-              'Delete Profile',
+              strings.deleteProfile,
               style: TextStyle(color: context.palette.error),
             ),
             onTap: _confirmDelete,
           ),
 
-          _sectionHeader(context, 'Others'),
+          _sectionHeader(context, strings.others),
           ListTile(
             leading: const Icon(Icons.share),
-            title: const Text('Share'),
+            title: Text(strings.share),
             enabled: AppConfig.appLink.isNotEmpty,
             onTap: _shareApp,
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.star_border),
-            title: const Text('Rate us'),
+            title: Text(strings.rateUs),
             enabled: AppConfig.playStoreUrl.isNotEmpty,
             onTap: () => _launch(AppConfig.playStoreUrl),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.feedback_outlined),
-            title: const Text('Feedback'),
+            title: Text(strings.feedback),
             enabled: AppConfig.feedbackEmail.isNotEmpty,
             onTap: () => _launch('mailto:${AppConfig.feedbackEmail}'),
           ),
 
-          _sectionHeader(context, 'About'),
+          _sectionHeader(context, strings.aboutSection),
           ListTile(
             leading: const Icon(Icons.help_outline),
-            title: const Text('Help & Support'),
+            title: Text(strings.helpSupport),
             enabled: AppConfig.feedbackEmail.isNotEmpty,
             onTap: () => _launch('mailto:${AppConfig.feedbackEmail}'),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.description_outlined),
-            title: const Text('Terms of Service'),
+            title: Text(strings.termsService),
             enabled: AppConfig.termsUrl.isNotEmpty,
             onTap: () => _launch(AppConfig.termsUrl),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.privacy_tip_outlined),
-            title: const Text('Privacy Policy'),
+            title: Text(strings.privacyPolicy),
             enabled: AppConfig.privacyPolicyUrl.isNotEmpty,
             onTap: () => _launch(AppConfig.privacyPolicyUrl),
           ),
@@ -361,7 +363,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('About'),
-            subtitle: const Text('App version and details'),
+            subtitle: Text(strings.aboutDetails),
             trailing: const Icon(Icons.chevron_right),
             onTap: _showAbout,
           ),
@@ -377,12 +379,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ),
               onPressed: _confirmLogout,
               icon: const Icon(Icons.logout),
-              label: const Text('Logout'),
+              label: Text(strings.logout),
             ),
           ),
           const SizedBox(height: 16),
-          const BannerAdWidget(adUnitId: AdUnits.settingsBanner),
-          const SizedBox(height: 24),
         ],
       ),
     );

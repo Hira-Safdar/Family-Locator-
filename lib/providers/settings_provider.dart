@@ -12,22 +12,26 @@ class UserSettings {
   final bool notificationsEnabled;
   final int refreshSeconds;
   final ThemeMode themeMode;
+  final Locale locale;
 
   const UserSettings({
     required this.notificationsEnabled,
     required this.refreshSeconds,
     required this.themeMode,
+    required this.locale,
   });
 
   UserSettings copyWith({
     bool? notificationsEnabled,
     int? refreshSeconds,
     ThemeMode? themeMode,
+    Locale? locale,
   }) {
     return UserSettings(
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       refreshSeconds: refreshSeconds ?? this.refreshSeconds,
       themeMode: themeMode ?? this.themeMode,
+      locale: locale ?? this.locale,
     );
   }
 }
@@ -40,6 +44,7 @@ class SettingsController extends Notifier<UserSettings> {
       notificationsEnabled: prefs.getBool('notificationsEnabled') ?? true,
       refreshSeconds: prefs.getInt('refreshSeconds') ?? 10,
       themeMode: _decodeThemeMode(prefs.getString('themeMode')),
+      locale: _decodeLocale(prefs.getString('language')),
     );
   }
 
@@ -60,6 +65,12 @@ class SettingsController extends Notifier<UserSettings> {
     ref.read(sharedPreferencesProvider).setString('themeMode', mode.name);
   }
 
+  void setLanguage(String language) {
+    final locale = language == 'Urdu' ? const Locale('ur') : const Locale('en');
+    state = state.copyWith(locale: locale);
+    ref.read(sharedPreferencesProvider).setString('language', language);
+  }
+
   static ThemeMode _decodeThemeMode(String? value) {
     switch (value) {
       case 'light':
@@ -67,8 +78,12 @@ class SettingsController extends Notifier<UserSettings> {
       case 'dark':
         return ThemeMode.dark;
       default:
-        return ThemeMode.system;
+        return ThemeMode.light;
     }
+  }
+
+  static Locale _decodeLocale(String? value) {
+    return value == 'Urdu' ? const Locale('ur') : const Locale('en');
   }
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/app_strings.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
@@ -22,14 +23,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   bool _locked = false;
   bool _sent = false;
 
-  String? _validateEmail(String email) {
+  String? _validateEmail(String email, AppLocalizations strings) {
     final valid = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$').hasMatch(email);
-    return valid ? null : 'Enter a valid email';
+    return valid ? null : strings.validEmail;
   }
 
   Future<void> _submit() async {
     final email = _emailController.text.trim();
-    final emailError = _validateEmail(email);
+    final strings = AppLocalizations.of(context);
+    final emailError = _validateEmail(email, strings);
     if (emailError != null) {
       setState(() {
         _emailError = emailError;
@@ -58,7 +60,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     } catch (_) {
       setState(() {
         _locked = false;
-        _serverError = 'Something went wrong. Please try again.';
+        _serverError = strings.somethingWrong;
       });
     }
   }
@@ -85,6 +87,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Widget _formView(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -92,13 +95,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         Icon(Icons.lock_reset, size: 72, color: context.palette.primary),
         const SizedBox(height: 16),
         Text(
-          'Forgot password?',
+          strings.forgotPassword,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
         Text(
-          'Enter your email and we will send you a link to reset it.',
+          strings.forgotSubtitle,
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
@@ -111,7 +114,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
-            labelText: 'Email',
+            labelText: strings.email,
             prefixIcon: const Icon(Icons.email_outlined),
             errorText: _emailError,
           ),
@@ -130,7 +133,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         ],
         const SizedBox(height: 24),
         CustomButton(
-          label: 'Send reset link',
+          label: strings.sendResetLink,
           isLoading: _locked,
           onPressed: _submit,
         ),
@@ -138,10 +141,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Remembered it?'),
+            Text(strings.rememberedIt),
             TextButton(
               onPressed: () => context.go('/login'),
-              child: const Text('Sign In'),
+              child: Text(strings.signIn),
             ),
           ],
         ),
@@ -150,6 +153,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Widget _sentView(BuildContext context) {
+    final strings = AppLocalizations.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,7 +165,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Check your email',
+          strings.checkEmail,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
@@ -176,7 +180,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 32),
         CustomButton(
-          label: 'Back to sign in',
+          label: strings.backToSignIn,
           onPressed: () => context.go('/login'),
         ),
       ],

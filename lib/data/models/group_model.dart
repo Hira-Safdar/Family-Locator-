@@ -25,7 +25,6 @@ class GroupModel {
   factory GroupModel.fromJson(Map<String, dynamic> json) {
     final rawMembers = json['memberIds'];
     final rawCreatedAt = json['createdAt'];
-    
 
     return GroupModel(
       id: json['id'] as String? ?? '',
@@ -38,7 +37,7 @@ class GroupModel {
           : const <String>[],
       createdAt: rawCreatedAt is String
           ? DateTime.tryParse(rawCreatedAt) ??
-              DateTime.fromMillisecondsSinceEpoch(0)
+                DateTime.fromMillisecondsSinceEpoch(0)
           : DateTime.fromMillisecondsSinceEpoch(0),
       sos: json['sos'] is Map
           ? SosAlert.fromJson(Map<String, dynamic>.from(json['sos'] as Map))

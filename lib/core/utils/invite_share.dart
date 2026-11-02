@@ -15,7 +15,5 @@ void copyInviteCode(BuildContext context, String inviteCode) {
   Clipboard.setData(ClipboardData(text: inviteCode));
   ScaffoldMessenger.of(context)
     ..clearSnackBars()
-    ..showSnackBar(
-      SnackBar(content: Text('Invite code $inviteCode copied')),
-    );
+    ..showSnackBar(SnackBar(content: Text('Invite code $inviteCode copied')));
 }

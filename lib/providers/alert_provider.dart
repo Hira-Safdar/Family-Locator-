@@ -33,5 +33,6 @@ class AlertController extends AsyncNotifier<void> {
   }
 }
 
-final alertControllerProvider =
-    AsyncNotifierProvider<AlertController, void>(AlertController.new);
+final alertControllerProvider = AsyncNotifierProvider<AlertController, void>(
+  AlertController.new,
+);

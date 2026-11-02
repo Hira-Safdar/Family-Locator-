@@ -1,4 +1,4 @@
-class UserProfile{
+class UserProfile {
   final String uid;
   final String name;
   final String email;
@@ -13,7 +13,7 @@ class UserProfile{
     this.phone,
   });
 
-  factory UserProfile.fromJson(Map<String, dynamic> json){
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       uid: json['uid'] as String,
       name: json['name'] as String,
@@ -22,7 +22,7 @@ class UserProfile{
       phone: json['phone'] as String?,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'uid': uid,
@@ -33,7 +33,12 @@ class UserProfile{
     };
   }
 
-  UserProfile copyWith({String? name, String? email, String? photoUrl, String? phone}){
+  UserProfile copyWith({
+    String? name,
+    String? email,
+    String? photoUrl,
+    String? phone,
+  }) {
     return UserProfile(
       uid: uid,
       name: name ?? this.name,

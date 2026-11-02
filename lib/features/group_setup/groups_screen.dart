@@ -3,15 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/group_categories.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/invite_share.dart';
 import '../../data/models/group_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
-import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/error_view.dart';
 import '../../shared_widgets/loading_indicator.dart';
 
@@ -68,9 +67,10 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
   @override
   Widget build(BuildContext context) {
     final groups = ref.watch(myGroupsStreamProvider);
+    final strings = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('All Groups')),
+      appBar: AppBar(title: Text(strings.allGroups)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -88,7 +88,7 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
               ),
               onPressed: () => context.push('/choose-group'),
               icon: const Icon(Icons.add_circle_outline, size: 18),
-              label: const Text('Create Group'),
+              label: Text(strings.createGroup),
             ),
           ),
           Padding(
@@ -105,11 +105,9 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
               ),
               onPressed: () => context.push('/join-group'),
               icon: const Icon(Icons.login, size: 18),
-              label: const Text('Join a Group'),
+              label: Text(strings.joinAGroup),
             ),
           ),
-          const SizedBox(height: 4),
-          const BannerAdWidget(adUnitId: AdUnits.groupsBanner),
           const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
@@ -117,7 +115,7 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
               controller: _searchController,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search by name or code',
+                hintText: strings.searchNameCode,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _query.isEmpty
                     ? null
@@ -155,21 +153,21 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
               ),
               PopupMenuButton<_GroupSort>(
                 icon: const Icon(Icons.sort),
-                tooltip: 'Sort',
+                tooltip: strings.sort,
                 initialValue: _sort,
                 onSelected: (value) => setState(() => _sort = value),
-                itemBuilder: (context) => const [
+                itemBuilder: (context) => [
                   PopupMenuItem(
                     value: _GroupSort.newest,
-                    child: Text('Newest first'),
+                    child: Text(strings.newestFirst),
                   ),
                   PopupMenuItem(
                     value: _GroupSort.name,
-                    child: Text('Name (A-Z)'),
+                    child: Text(strings.nameAZ),
                   ),
                   PopupMenuItem(
                     value: _GroupSort.members,
-                    child: Text('Most members'),
+                    child: Text(strings.mostMembers),
                   ),
                 ],
               ),

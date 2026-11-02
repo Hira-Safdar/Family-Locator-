@@ -29,7 +29,7 @@ class AlertRecord {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
       createdAt: json['createdAt'] is String
           ? DateTime.tryParse(json['createdAt'] as String) ??
-              DateTime.fromMillisecondsSinceEpoch(0)
+                DateTime.fromMillisecondsSinceEpoch(0)
           : DateTime.fromMillisecondsSinceEpoch(0),
       resolvedAt: json['resolvedAt'] is String
           ? DateTime.tryParse(json['resolvedAt'] as String)
