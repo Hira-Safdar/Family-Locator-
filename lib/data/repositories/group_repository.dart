@@ -471,10 +471,20 @@ class GroupRepository {
     switch (e.code) {
       case 'permission-denied':
         return 'You do not have permission to perform this action.';
+      case 'unavailable':
+        return 'Firebase is temporarily unavailable. Check your internet connection and try again.';
+      case 'deadline-exceeded':
+        return 'The request timed out. Check your internet connection and try again.';
+      case 'aborted':
+        return 'The group was changed while it was being created. Please try again.';
+      case 'failed-precondition':
+        return 'Firebase is not ready for this operation. Please try again.';
+      case 'resource-exhausted':
+        return 'Firebase has temporarily reached a usage limit. Please wait a moment and try again.';
       case 'not-found':
         return 'The requested document was not found.';
       default:
-        return 'An unexpected error occurred. Please try again.';
+        return 'Firebase error (${e.code}). Please try again.';
     }
   }
 }

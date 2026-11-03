@@ -60,6 +60,7 @@ class BackgroundTracking {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_enabledKey, true);
     await prefs.setInt(_intervalKey, seconds);
+    await prefs.setInt(_minMetersKey, AppConfig.minDistanceToUpload.round());
     await FlutterBackgroundService().startService();
   }
 

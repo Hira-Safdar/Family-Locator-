@@ -442,14 +442,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const Icon(Icons.emergency, color: Colors.white),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                isMine
-                    ? AppLocalizations.of(context).sosSentMessage
-                    : AppLocalizations.of(context).sosNeedsHelp(sos.name),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              child: InkWell(
+                onTap: () => _focusOnSos(sos),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    isMine
+                        ? AppLocalizations.of(context).sosSentMessage
+                        : AppLocalizations.of(context).sosNeedsHelp(sos.name),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -11,8 +11,6 @@ class BannerAdWidget extends StatefulWidget {
 }
 
 class _BannerAdWidgetState extends State<BannerAdWidget> {
-  static const _reservedHeight = 100.0;
-
   BannerAd? _ad;
   bool _loaded = false;
   bool _loading = false;
@@ -34,6 +32,15 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
         listener: BannerAdListener(
           onAdLoaded: (_) {
             if (mounted) setState(() => _loaded = true);
+          },
+          onAdFailedToLoad: (failedAd, _) {
+            failedAd.dispose();
+            if (mounted) {
+              setState(() {
+                _ad = null;
+                _loading = false;
+              });
+            }
           },
         ),
         request: const AdRequest(),
@@ -64,15 +71,19 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   Widget build(BuildContext context) {
     final ad = _ad;
     if (!_loaded || ad == null) {
-      return const SizedBox(height: _reservedHeight);
+      return const SizedBox.shrink();
     }
-    return SizedBox(
-      height: _reservedHeight,
-      child: Center(
-        child: SizedBox(
-          width: ad.size.width.toDouble(),
-          height: ad.size.height.toDouble(),
-          child: AdWidget(ad: ad),
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      child: SizedBox(
+        height: ad.size.height.toDouble(),
+        child: Center(
+          child: SizedBox(
+            width: ad.size.width.toDouble(),
+            height: ad.size.height.toDouble(),
+            child: AdWidget(ad: ad),
+          ),
         ),
       ),
     );
