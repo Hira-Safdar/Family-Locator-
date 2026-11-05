@@ -31,7 +31,12 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       Orientation.portrait,
       width,
     ).then((size) {
-      if (!mounted || size == null) return;
+      if (!mounted) return;
+      if (size == null) {
+        debugPrint('Banner ad size unavailable for ${widget.adUnitId}');
+        setState(() => _loading = false);
+        return;
+      }
       final ad = BannerAd(
         size: size,
         adUnitId: widget.adUnitId,
@@ -39,8 +44,12 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
           onAdLoaded: (_) {
             if (mounted) setState(() => _loaded = true);
           },
-          onAdFailedToLoad: (failedAd, _) {
+          onAdFailedToLoad: (failedAd, error) {
             failedAd.dispose();
+            debugPrint(
+              'Banner ad failed to load (${widget.adUnitId}): '
+              '${error.code} ${error.message}',
+            );
             if (mounted) {
               setState(() {
                 _ad = null;

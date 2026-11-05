@@ -53,7 +53,13 @@ class AdsService with WidgetsBindingObserver {
             },
           );
         },
-        onAdFailedToLoad: (_) => _interactionInterstitialAd = null,
+        onAdFailedToLoad: (error) {
+          _interactionInterstitialAd = null;
+          logAdError(
+            'Interaction interstitial failed (${error.code}): '
+            '${error.message}',
+          );
+        },
       ),
     );
   }
@@ -82,7 +88,10 @@ class AdsService with WidgetsBindingObserver {
             },
           );
         },
-        onAdFailedToLoad: (_) => _appOpenAd = null,
+        onAdFailedToLoad: (error) {
+          _appOpenAd = null;
+          logAdError('App-open ad failed (${error.code}): ${error.message}');
+        },
       ),
     );
   }
@@ -109,7 +118,10 @@ class AdsService with WidgetsBindingObserver {
             },
           );
         },
-        onAdFailedToLoad: (_) => _interstitialAd = null,
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+          logAdError('Interstitial failed (${error.code}): ${error.message}');
+        },
       ),
     );
   }

@@ -28,6 +28,10 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
+          debugPrint(
+            'Native ad failed to load (${widget.adUnitId}): '
+            '${error.code} ${error.message}',
+          );
           if (mounted) setState(() => _ad = null);
         },
       ),
