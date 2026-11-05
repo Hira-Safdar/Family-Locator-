@@ -32,13 +32,15 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       width,
     ).then((size) {
       if (!mounted) return;
+      final adSize = size ?? AdSize.banner;
       if (size == null) {
-        debugPrint('Banner ad size unavailable for ${widget.adUnitId}');
-        setState(() => _loading = false);
-        return;
+        debugPrint(
+          'Adaptive banner size unavailable for ${widget.adUnitId}; '
+          'using standard banner size.',
+        );
       }
       final ad = BannerAd(
-        size: size,
+        size: adSize,
         adUnitId: widget.adUnitId,
         listener: BannerAdListener(
           onAdLoaded: (_) {
