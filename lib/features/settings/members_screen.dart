@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/date_formatter.dart';
@@ -12,6 +13,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
 import '../../providers/member_locations_provider.dart';
 import '../../shared_widgets/profile_avatar.dart';
+import '../../shared_widgets/native_ad_widget.dart';
 
 class MembersScreen extends ConsumerStatefulWidget {
   const MembersScreen({super.key, required this.groupId});
@@ -342,23 +344,31 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
                           child: CircularProgressIndicator(),
                         ),
                       )
-                    : OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: context.palette.error,
-                          side: BorderSide(color: context.palette.error),
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                    : Column(
+                        children: [
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: context.palette.error,
+                              side: BorderSide(color: context.palette.error),
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            onPressed: () =>
+                                isOwner ? _delete(group!) : _leave(group!),
+                            icon: Icon(
+                              isOwner ? Icons.delete_outline : Icons.logout,
+                            ),
+                            label: Text(
+                              isOwner
+                                  ? strings.deleteGroupQuestion
+                                  : strings.leave,
+                            ),
                           ),
-                        ),
-                        onPressed: () =>
-                            isOwner ? _delete(group!) : _leave(group!),
-                        icon: Icon(
-                          isOwner ? Icons.delete_outline : Icons.logout,
-                        ),
-                        label: Text(
-                          isOwner ? strings.deleteGroupQuestion : strings.leave,
-                        ),
+                          const SizedBox(height: 8),
+                          const NativeAdWidget(adUnitId: AdUnits.membersNative),
+                        ],
                       ),
               ),
             ],

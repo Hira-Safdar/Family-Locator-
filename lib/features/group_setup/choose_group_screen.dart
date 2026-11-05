@@ -5,6 +5,7 @@ import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/group_categories.dart';
 import '../../core/constants/app_strings.dart';
+import '../../data/services/ads_service.dart';
 import '../../shared_widgets/banner_ad_widget.dart';
 
 class ChooseGroupScreen extends StatefulWidget {
@@ -77,7 +78,10 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
                       icon: _icons[category] ?? Icons.group_outlined,
                       hint: strings.categoryHint(_hints[category] ?? ''),
                       selected: _selected == category,
-                      onTap: () => setState(() => _selected = category),
+                      onTap: () {
+                        AdsService.instance.registerInteraction();
+                        setState(() => _selected = category);
+                      },
                     ),
                     if (category == GroupCategories.school)
                       _AdvertisementCard(label: strings.advertisement),
@@ -88,7 +92,12 @@ class _ChooseGroupScreenState extends State<ChooseGroupScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: ElevatedButton(
-                onPressed: _selected == null ? null : _continue,
+                onPressed: _selected == null
+                    ? null
+                    : () {
+                        AdsService.instance.registerInteraction();
+                        _continue();
+                      },
                 child: Text(strings.continueLabel),
               ),
             ),

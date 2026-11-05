@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_strings.dart';
+import '../../data/services/ads_service.dart';
 import '../../providers/settings_provider.dart';
 import '../../shared_widgets/banner_ad_widget.dart';
 
@@ -47,7 +48,10 @@ class _LanguageSelectionScreenState
           const SizedBox(height: 16),
           RadioGroup<String>(
             groupValue: _language,
-            onChanged: (value) => setState(() => _language = value!),
+            onChanged: (value) {
+              AdsService.instance.registerInteraction();
+              setState(() => _language = value!);
+            },
             child: Column(
               children: [
                 for (final language in const ['English', 'Urdu'])

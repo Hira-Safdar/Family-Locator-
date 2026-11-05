@@ -11,8 +11,8 @@ import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../data/services/ads_service.dart';
 import '../../providers/group_provider.dart';
-import '../../shared_widgets/banner_ad_widget.dart';
 import '../../shared_widgets/custom_button.dart';
+import '../../shared_widgets/native_ad_widget.dart';
 
 class CreateGroupScreen extends ConsumerStatefulWidget {
   const CreateGroupScreen({super.key, this.category = GroupCategories.custom});
@@ -31,6 +31,8 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
   bool _locked = false;
   bool _isDuplicate = false;
   List<String> _suggestions = const [];
+
+  bool get _isCustom => widget.category == GroupCategories.custom;
 
   @override
   void dispose() {
@@ -54,6 +56,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
   }
 
   Future<void> _checkDuplicate() async {
+    if (!_isCustom) return;
     final name = _nameController.text.trim();
     if (name.isEmpty || !mounted) return;
 
@@ -111,7 +114,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
   }
 
   Future<void> _submit() async {
-    final name = _nameController.text.trim();
+    final name = _isCustom ? _nameController.text.trim() : widget.category;
     if (name.isEmpty) {
       setState(() {
         _nameError = 'Group name cannot be empty';
@@ -253,18 +256,19 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: _nameController,
-                enabled: !_locked,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  labelText: strings.groupName,
-                  prefixIcon: const Icon(Icons.group_outlined),
-                  errorText: _nameError,
+              if (_isCustom)
+                TextField(
+                  controller: _nameController,
+                  enabled: !_locked,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: strings.groupName,
+                    prefixIcon: const Icon(Icons.group_outlined),
+                    errorText: _nameError,
+                  ),
+                  onChanged: _onChanged,
+                  onSubmitted: (_) => _submit(),
                 ),
-                onChanged: _onChanged,
-                onSubmitted: (_) => _submit(),
-              ),
               if (_isDuplicate && _suggestions.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -299,7 +303,10 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                 onPressed: _submit,
               ),
               const SizedBox(height: 12),
-              const BannerAdWidget(adUnitId: AdUnits.groupSetupBanner),
+              const NativeAdWidget(
+                adUnitId: AdUnits.groupSetupNative,
+                height: 96,
+              ),
             ],
           ),
         ),

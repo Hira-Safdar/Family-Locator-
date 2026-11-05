@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/services/ads_service.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_strings.dart';
@@ -43,7 +44,10 @@ class OfflineView extends StatelessWidget {
                   side: BorderSide(color: context.palette.primary),
                   foregroundColor: context.palette.primary,
                 ),
-                onPressed: onRetry,
+                onPressed: () {
+                  AdsService.instance.registerInteraction();
+                  onRetry!();
+                },
                 icon: const Icon(Icons.refresh),
                 label: Text(AppLocalizations.of(context).tryAgain),
               ),

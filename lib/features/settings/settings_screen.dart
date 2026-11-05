@@ -8,12 +8,15 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_config.dart';
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
+import '../../data/services/ads_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../shared_widgets/profile_avatar.dart';
+import '../../shared_widgets/native_ad_widget.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -238,6 +241,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           _profileHeader(context),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: NativeAdWidget(adUnitId: AdUnits.settingsNative, height: 96),
+          ),
           _sectionHeader(context, strings.managePermissions),
           ListTile(
             leading: const Icon(Icons.location_on_outlined),
@@ -252,7 +259,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             title: Text(strings.appearance),
             subtitle: Text(_themeModeLabel(settings.themeMode)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _pickThemeMode(settings.themeMode),
+            onTap: () {
+              AdsService.instance.registerInteraction();
+              _pickThemeMode(settings.themeMode);
+            },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           SwitchListTile(
@@ -260,7 +270,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             title: Text(strings.notifications),
             subtitle: Text(strings.sosAlerts),
             value: settings.notificationsEnabled,
-            onChanged: _setNotifications,
+            onChanged: (enabled) {
+              AdsService.instance.registerInteraction();
+              _setNotifications(enabled);
+            },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
@@ -268,7 +281,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             title: Text(strings.privacyControls),
             subtitle: Text(strings.pauseSharing),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/privacy'),
+            onTap: () {
+              AdsService.instance.registerInteraction();
+              context.push('/privacy');
+            },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
 
@@ -278,7 +294,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             title: Text(strings.locationRefresh),
             subtitle: Text(_intervalLabel(settings.refreshSeconds, strings)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: _showRefreshSheet,
+            onTap: () {
+              AdsService.instance.registerInteraction();
+              _showRefreshSheet();
+            },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
@@ -286,7 +305,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             title: Text(strings.alertsHistory),
             subtitle: Text(strings.pastSos),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/alerts'),
+            onTap: () {
+              AdsService.instance.registerInteraction();
+              context.push('/alerts');
+            },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(

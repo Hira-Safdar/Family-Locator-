@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../data/services/ads_service.dart';
+
 class CustomButton extends StatelessWidget {
   const CustomButton({
     super.key,
@@ -15,7 +17,12 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
+      onPressed: isLoading || onPressed == null
+          ? null
+          : () {
+              AdsService.instance.registerInteraction();
+              onPressed!();
+            },
       child: isLoading
           ? const SizedBox(
               height: 20,

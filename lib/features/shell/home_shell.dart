@@ -14,6 +14,7 @@ import '../../shared_widgets/campaign_banner.dart';
 import '../../shared_widgets/banner_ad_widget.dart';
 import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_strings.dart';
+import '../../data/services/ads_service.dart';
 import '../group_setup/groups_screen.dart';
 import '../home_map/home_map_screen.dart';
 import '../settings/settings_screen.dart';
@@ -171,20 +172,21 @@ class _HomeShellState extends ConsumerState<HomeShell>
               const BannerAdWidget(
                 key: ValueKey('home-bottom-banner'),
                 adUnitId: AdUnits.homeBanner,
+                collapsible: true,
               ),
             if (_index == 2)
               const BannerAdWidget(
                 key: ValueKey('settings-bottom-banner'),
                 adUnitId: AdUnits.settingsBanner,
               ),
-            if (_index == 1)
-              const BannerAdWidget(
-                key: ValueKey('groups-bottom-banner'),
-                adUnitId: AdUnits.groupsBanner,
-              ),
             NavigationBar(
               selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
+              onDestinationSelected: (i) {
+                if (i != _index) {
+                  AdsService.instance.registerInteraction();
+                }
+                setState(() => _index = i);
+              },
               destinations: [
                 NavigationDestination(
                   icon: Icon(Icons.map_outlined),

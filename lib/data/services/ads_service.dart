@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -6,12 +8,19 @@ import '../../core/constants/ad_units.dart';
 
 class AdsService with WidgetsBindingObserver {
   static final AdsService instance = AdsService._();
+  static const _interactionAdCooldown = Duration(seconds: 55);
   AdsService._();
 
   AppOpenAd? _appOpenAd;
   DateTime? _lastAppOpenShown;
   InterstitialAd? _interstitialAd;
+  InterstitialAd? _interactionInterstitialAd;
   DateTime? _lastInterstitialShown;
+  DateTime? _lastInteractionInterstitialShown;
+  DateTime? _lastFullscreenAdClosed;
+  int _interactionCount = 0;
+  int _interactionTarget = 2;
+  final Random _random = Random();
   bool _isShowingAppOpen = false;
 
   Future<void> initialize() async {
@@ -19,6 +28,34 @@ class AdsService with WidgetsBindingObserver {
     await MobileAds.instance.initialize();
     _loadAppOpen();
     _loadInterstitial();
+    _loadInteractionInterstitial();
+  }
+
+  void _loadInteractionInterstitial() {
+    InterstitialAd.load(
+      adUnitId: AdUnits.interactionInterstitial,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interactionInterstitialAd = ad;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _interactionInterstitialAd = null;
+              _lastFullscreenAdClosed = DateTime.now();
+              _loadInteractionInterstitial();
+            },
+            onAdFailedToShowFullScreenContent: (ad, _) {
+              ad.dispose();
+              _interactionInterstitialAd = null;
+              _lastFullscreenAdClosed = DateTime.now();
+              _loadInteractionInterstitial();
+            },
+          );
+        },
+        onAdFailedToLoad: (_) => _interactionInterstitialAd = null,
+      ),
+    );
   }
 
   void _loadAppOpen() {
@@ -33,12 +70,14 @@ class AdsService with WidgetsBindingObserver {
               ad.dispose();
               _appOpenAd = null;
               _isShowingAppOpen = false;
+              _lastFullscreenAdClosed = DateTime.now();
               _loadAppOpen();
             },
             onAdFailedToShowFullScreenContent: (ad, _) {
               ad.dispose();
               _appOpenAd = null;
               _isShowingAppOpen = false;
+              _lastFullscreenAdClosed = DateTime.now();
               _loadAppOpen();
             },
           );
@@ -59,11 +98,13 @@ class AdsService with WidgetsBindingObserver {
             onAdDismissedFullScreenContent: (ad) {
               ad.dispose();
               _interstitialAd = null;
+              _lastFullscreenAdClosed = DateTime.now();
               _loadInterstitial();
             },
             onAdFailedToShowFullScreenContent: (ad, _) {
               ad.dispose();
               _interstitialAd = null;
+              _lastFullscreenAdClosed = DateTime.now();
               _loadInterstitial();
             },
           );
@@ -78,6 +119,9 @@ class AdsService with WidgetsBindingObserver {
     final now = DateTime.now();
     if (ad == null ||
         _isShowingAppOpen ||
+        (_lastFullscreenAdClosed != null &&
+            now.difference(_lastFullscreenAdClosed!) <
+                const Duration(seconds: 10)) ||
         (_lastAppOpenShown != null &&
             now.difference(_lastAppOpenShown!) < const Duration(minutes: 5))) {
       return;
@@ -96,8 +140,31 @@ class AdsService with WidgetsBindingObserver {
                 const Duration(minutes: 10))) {
       return;
     }
+
     _lastInterstitialShown = now;
     _interstitialAd = null;
+    ad.show();
+  }
+
+  void registerInteraction() {
+    _interactionCount++;
+    if (_interactionCount < _interactionTarget) return;
+    _interactionCount = 0;
+    _interactionTarget = 2 + _random.nextInt(2);
+    _showInteractionInterstitialIfAllowed();
+  }
+
+  void _showInteractionInterstitialIfAllowed() {
+    final ad = _interactionInterstitialAd;
+    final now = DateTime.now();
+    if (ad == null ||
+        (_lastInteractionInterstitialShown != null &&
+            now.difference(_lastInteractionInterstitialShown!) <
+                _interactionAdCooldown)) {
+      return;
+    }
+    _lastInteractionInterstitialShown = now;
+    _interactionInterstitialAd = null;
     ad.show();
   }
 
@@ -112,6 +179,7 @@ class AdsService with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _appOpenAd?.dispose();
     _interstitialAd?.dispose();
+    _interactionInterstitialAd?.dispose();
   }
 
   static void logAdError(Object error) {

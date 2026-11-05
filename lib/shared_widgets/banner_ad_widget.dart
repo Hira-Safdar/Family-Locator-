@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class BannerAdWidget extends StatefulWidget {
-  const BannerAdWidget({super.key, required this.adUnitId});
+  const BannerAdWidget({
+    super.key,
+    required this.adUnitId,
+    this.collapsible = false,
+  });
 
   final String adUnitId;
+  final bool collapsible;
 
   @override
   State<BannerAdWidget> createState() => _BannerAdWidgetState();
@@ -14,6 +19,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   BannerAd? _ad;
   bool _loaded = false;
   bool _loading = false;
+  bool _collapsed = false;
 
   @override
   void didChangeDependencies() {
@@ -73,18 +79,39 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     if (!_loaded || ad == null) {
       return const SizedBox.shrink();
     }
+    if (_collapsed) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: IconButton(
+          tooltip: 'Show ad',
+          icon: const Icon(Icons.expand_less),
+          onPressed: () => setState(() => _collapsed = false),
+        ),
+      );
+    }
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      child: SizedBox(
-        height: ad.size.height.toDouble(),
-        child: Center(
-          child: SizedBox(
-            width: ad.size.width.toDouble(),
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          SizedBox(
             height: ad.size.height.toDouble(),
-            child: AdWidget(ad: ad),
+            child: Center(
+              child: SizedBox(
+                width: ad.size.width.toDouble(),
+                height: ad.size.height.toDouble(),
+                child: AdWidget(ad: ad),
+              ),
+            ),
           ),
-        ),
+          if (widget.collapsible)
+            IconButton(
+              tooltip: 'Hide ad',
+              icon: const Icon(Icons.expand_more),
+              onPressed: () => setState(() => _collapsed = true),
+            ),
+        ],
       ),
     );
   }

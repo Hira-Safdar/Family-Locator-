@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../core/constants/ad_units.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/group_categories.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/errors/failure.dart';
 import '../../core/utils/invite_share.dart';
 import '../../data/models/group_model.dart';
+import '../../data/services/ads_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
 import '../../shared_widgets/error_view.dart';
 import '../../shared_widgets/loading_indicator.dart';
+import '../../shared_widgets/native_ad_widget.dart';
 
 enum _GroupSort { newest, name, members }
 
@@ -74,7 +77,10 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: () => context.push('/choose-group'),
+              onPressed: () {
+                AdsService.instance.registerInteraction();
+                context.push('/choose-group');
+              },
               icon: const Icon(Icons.add_circle_outline, size: 18),
               label: Text(strings.createGroup),
             ),
@@ -91,7 +97,10 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: () => context.push('/join-group'),
+              onPressed: () {
+                AdsService.instance.registerInteraction();
+                context.push('/join-group');
+              },
               icon: const Icon(Icons.login, size: 18),
               label: Text(strings.joinAGroup),
             ),
@@ -107,10 +116,12 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: [
                       _categoryChip('All', _category == null, () {
+                        AdsService.instance.registerInteraction();
                         setState(() => _category = null);
                       }),
                       for (final category in GroupCategories.all)
                         _categoryChip(category, _category == category, () {
+                          AdsService.instance.registerInteraction();
                           setState(() => _category = category);
                         }),
                     ],
@@ -121,7 +132,10 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                 icon: const Icon(Icons.sort),
                 tooltip: strings.sort,
                 initialValue: _sort,
-                onSelected: (value) => setState(() => _sort = value),
+                onSelected: (value) {
+                  AdsService.instance.registerInteraction();
+                  setState(() => _sort = value);
+                },
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: _GroupSort.newest,
@@ -161,9 +175,11 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.only(top: 4, bottom: 20),
-                          itemCount: list.length,
-                          itemBuilder: (context, i) =>
-                              _GroupCard(group: list[i]),
+                          itemCount: list.length + 1,
+                          itemBuilder: (context, i) {
+                            if (i == 0) return const _NativeGroupAdTile();
+                            return _GroupCard(group: list[i - 1]);
+                          },
                         ),
                 );
               },
@@ -182,6 +198,26 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
         selected: selected,
         onSelected: (_) => onTap(),
       ),
+    );
+  }
+}
+
+class _NativeGroupAdTile extends StatelessWidget {
+  const _NativeGroupAdTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
+        ],
+      ),
+      child: const NativeAdWidget(adUnitId: AdUnits.groupsNative, height: 96),
     );
   }
 }

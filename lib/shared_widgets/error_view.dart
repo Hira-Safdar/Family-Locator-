@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/services/ads_service.dart';
 import '../core/constants/app_strings.dart';
 
 class ErrorView extends StatelessWidget {
@@ -16,7 +17,10 @@ class ErrorView extends StatelessWidget {
           Text(message, textAlign: TextAlign.center),
           if (onRetry != null)
             TextButton(
-              onPressed: onRetry,
+              onPressed: () {
+                AdsService.instance.registerInteraction();
+                onRetry!();
+              },
               child: Text(AppLocalizations.of(context).retry),
             ),
         ],

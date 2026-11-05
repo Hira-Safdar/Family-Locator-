@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
 import '../../core/constants/app_strings.dart';
+import '../../data/services/ads_service.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../data/models/alert_record.dart';
 import '../../data/models/group_model.dart';
@@ -119,7 +120,10 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
     return ChoiceChip(
       label: Text(label),
       selected: _filter == value,
-      onSelected: (_) => setState(() => _filter = value),
+      onSelected: (_) {
+        AdsService.instance.registerInteraction();
+        setState(() => _filter = value);
+      },
     );
   }
 }

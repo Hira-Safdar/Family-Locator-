@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/errors/failure.dart';
 import '../../core/constants/app_strings.dart';
+import '../../data/services/ads_service.dart';
 import '../../providers/location_provider.dart';
 
 class PrivacyControlsScreen extends ConsumerStatefulWidget {
@@ -97,7 +98,10 @@ class _PrivacyControlsScreenState extends ConsumerState<PrivacyControlsScreen> {
               sharing ? strings.locationLive : strings.sharingPaused,
             ),
             value: sharing,
-            onChanged: (v) => _toggleSharing(v),
+            onChanged: (v) {
+              AdsService.instance.registerInteraction();
+              _toggleSharing(v);
+            },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
 
@@ -116,7 +120,10 @@ class _PrivacyControlsScreenState extends ConsumerState<PrivacyControlsScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : null,
-            onTap: _clearHistory,
+            onTap: () {
+              AdsService.instance.registerInteraction();
+              _clearHistory();
+            },
           ),
           if (_cleared) ...[
             const SizedBox(height: 4),
