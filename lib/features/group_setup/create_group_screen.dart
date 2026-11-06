@@ -305,7 +305,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
               const SizedBox(height: 12),
               const NativeAdWidget(
                 adUnitId: AdUnits.groupSetupNative,
-                height: 96,
+                height: 88,
               ),
             ],
           ),
